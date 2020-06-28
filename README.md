@@ -18,6 +18,8 @@ All default light settings should work with Dancing Lights, except where specifi
 
 ## Dancing Lights in action
 
+[Demo Video](https://youtu.be/eVwkINKb1nk)
+
 Note that the gifs below were recorded at ~15fps. Your results should look a little smoother.
 
 ### Performance
