@@ -37,17 +37,21 @@ If you hit any performance issues, I would love some feedback with your browser 
 #### Blur
 
 Light blur
+
 ![](./doc/lightblur.png)
 
 Heavy blur
+
 ![](./doc/heavyblur.png)
 
 #### Fire
 
 Default
+
 ![](./doc/defaultfire.gif)
 
 Colored
+
 ![](./doc/coloredfire.gif)
 
 #### Blink
@@ -65,6 +69,7 @@ Colored
 #### Animate Dim
 
 Example of Animate Dim enabled, on a fade light
+
 ![](./doc/fadedim.gif)
 
 ## Manifest
