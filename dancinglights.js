@@ -342,7 +342,9 @@ class DancingLights {
             if (DancingLights.fireColorFrame >= 20) {
                 DancingLights.fireColorFrame = 0;
             }
-            canvas.lighting.lighting.lights.clear();
+            try {
+                canvas.lighting.lighting.lights.clear();
+            } catch (e) {}
             for (let s of canvas.sight.sources.lights.values()) {
                 let dancingLightOptions;
                 let childID;
@@ -354,10 +356,14 @@ class DancingLights {
                 });
 
                 if (s.darknessThreshold <= canvas.lighting._darkness) {
-                    if (dancingLightOptions && dancingLightOptions.enabled && dancingLightOptions.type === 'fire') {
-                        canvas.lighting.lighting.lights.beginFill(DancingLights.getFireColor(childID, dancingLightOptions.startColor || '#ffc08f', dancingLightOptions.endColor || '#f8e0af'), dancingLightOptions.animateDimAlpha? 1 - (1 - (DancingLights.lastAlpha[childID])) / 4 || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
+                    if (dancingLightOptions && dancingLightOptions.enabled) {
+                        if (dancingLightOptions.type === 'fire') {
+                            canvas.lighting.lighting.lights.beginFill(DancingLights.getFireColor(childID, dancingLightOptions.startColor || '#ffc08f', dancingLightOptions.endColor || '#f8e0af'), dancingLightOptions.animateDimAlpha ? 1 - (1 - (DancingLights.lastAlpha[childID])) / 4 || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
+                        } else {
+                            canvas.lighting.lighting.lights.beginFill(s.color, dancingLightOptions.animateDimAlpha ? 1 - (1 - DancingLights.lastAlpha[childID]) / 2 || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
+                        }
                     } else {
-                        canvas.lighting.lighting.lights.beginFill(s.color, dancingLightOptions.animateDimAlpha?1 - (1 - DancingLights.lastAlpha[childID]) / 2 || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
+                        canvas.lighting.lighting.lights.beginFill(s.color, s.alpha).drawPolygon(s.fov).endFill();
                     }
                 }
             }
@@ -493,10 +499,14 @@ Hooks.once("canvasReady", () => {
                 }
             });
             if (s.darknessThreshold <= this._darkness) {
-                if (dancingLightOptions && dancingLightOptions.enabled && dancingLightOptions.type === 'fire') {
-                    canvas.lighting.lighting.lights.beginFill(DancingLights.getFireColor(childID, dancingLightOptions.startColor || '#ffc08f', dancingLightOptions.endColor || '#f8e0af'), dancingLightOptions.animateDimAlpha? 1 - (1 - (DancingLights.lastAlpha[childID])) / 4 || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
+                if (dancingLightOptions && dancingLightOptions.enabled) {
+                    if (dancingLightOptions.type === 'fire') {
+                        canvas.lighting.lighting.lights.beginFill(DancingLights.getFireColor(childID, dancingLightOptions.startColor || '#ffc08f', dancingLightOptions.endColor || '#f8e0af'), dancingLightOptions.animateDimAlpha ? 1 - (1 - (DancingLights.lastAlpha[childID])) / 4 || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
+                    } else {
+                        canvas.lighting.lighting.lights.beginFill(s.color, dancingLightOptions.animateDimAlpha ? 1 - (1 - DancingLights.lastAlpha[childID]) / 2 || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
+                    }
                 } else {
-                    canvas.lighting.lighting.lights.beginFill(s.color, dancingLightOptions.animateDimAlpha?1 - (1 - DancingLights.lastAlpha[childID]) / 2 || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
+                    canvas.lighting.lighting.lights.beginFill(s.color, s.alpha).drawPolygon(s.fov).endFill();
                 }
             }
             /* Monkeypatch block end */
