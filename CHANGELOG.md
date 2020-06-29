@@ -1,3 +1,7 @@
+# 1.1.4 - 2020/06/29
+
+* Temporarily disabled scene-wide lighting updates due to nasty bugs
+
 # 1.1.3 - 2020/06/29
 
 * Updated scene-wide light update to properly set the flags

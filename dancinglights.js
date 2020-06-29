@@ -208,7 +208,7 @@ class DancingLights {
         });
         let updateAll = DancingLights.getFormElement("Update All Lights", "Check this to automatically update all of the lights in the scene to match this one. This only updates the DancingLight options, not defaults like position etc.", "checkbox", "updateAll", "false", "Boolean");
 
-        $('button[name ="submit"]').before(`${dancingLightsHeader}${dancingLightsEnabled}${blurEnabled}${blurAmount}${danceType}${sync}${animateDim}${startColor}${endColor}${movementAmount}${speed}${updateAll}`)
+        $('button[name ="submit"]').before(`${dancingLightsHeader}${dancingLightsEnabled}${blurEnabled}${blurAmount}${danceType}${sync}${animateDim}${startColor}${endColor}${movementAmount}${speed}`)
     }
     /* Input form end */
 
@@ -386,16 +386,18 @@ class DancingLights {
         DancingLights.createTimers();
     }
     static onUpdateAmbientLight(scene, light, custom, changes, sceneID) {
-        if (light.flags.world && light.flags.world.dancingLights && light.flags.world.dancingLights.updateAll) {
-            light.flags.world.dancingLights.updateAll = false;
-            let lightId = light.id;
-            game.scenes.viewed.data.lights.forEach(ambientLight => {
-                if (ambientLight._id !== lightId) {
-                    canvas.lighting.get(ambientLight._id).setFlag("world", "dancingLights", light.flags.world.dancingLights);
-                }
-            });
 
-        }
+        // TODO: Fix this
+        // if (light.flags.world && light.flags.world.dancingLights && light.flags.world.dancingLights.updateAll) {
+        //     light.flags.world.dancingLights.updateAll = false;
+        //     let lightId = light.id;
+        //     game.scenes.viewed.data.lights.forEach(ambientLight => {
+        //         if (ambientLight._id !== lightId) {
+        //             canvas.lighting.get(ambientLight._id).setFlag("world", "dancingLights", light.flags.world.dancingLights);
+        //         }
+        //     });
+
+        // }
         DancingLights.destroyAllTimers();
         DancingLights.createTimers();
     }
