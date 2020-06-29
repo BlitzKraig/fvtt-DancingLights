@@ -196,13 +196,18 @@ class DancingLights {
         let animateDim = DancingLights.getFormElement("Enable Dim Animation", "If checked, the 'dim' light will also fade based on a fraction of the bright light. This overrides the 'Light Opacity' in the default light settings. Disable this to keep the opacity as set.", "checkbox", "animateDimAlpha", lightConfig.object.data.flags.world.dancingLights.animateDimAlpha || "false", "Boolean"); //animateDimAlpha
         let startColor = DancingLights.getFormElement("Fire Color Dim", "The light color when the fire is at its dimmest", "color", "startColor", lightConfig.object.data.flags.world.dancingLights.startColor || "#ffc08f", "String");
         let endColor = DancingLights.getFormElement("Fire Color Bright", "The light color when the fire is at its brightest", "color", "endColor", lightConfig.object.data.flags.world.dancingLights.endColor || "#f8e0af", "String");
+        let movementAmount = DancingLights.getFormElement("Fire Movement Amount", "How much the fire position flickers", "range", "fireMovement", lightConfig.object.data.flags.world.dancingLights.fireMovement || 15, "Number", {
+            min: 1,
+            max: 40,
+            step: 1
+        });
         let speed = DancingLights.getFormElement("Speed", "The speed of the 'animations'. Lower is faster. Note that the movement of the 'fire' is not affected by this, only the alpha changes. The 'electricfault' type triggers more often with higher numbers here.", "range", "speed", lightConfig.object.data.flags.world.dancingLights.speed || 1, "Number", {
             min: 1,
             max: 10,
             step: 1
         });
 
-        $('button[name ="submit"]').before(`${dancingLightsHeader}${dancingLightsEnabled}${blurEnabled}${blurAmount}${danceType}${sync}${animateDim}${startColor}${endColor}${speed}`)
+        $('button[name ="submit"]').before(`${dancingLightsHeader}${dancingLightsEnabled}${blurEnabled}${blurAmount}${danceType}${sync}${animateDim}${startColor}${endColor}${movementAmount}${speed}`)
     }
     /* Input form end */
 
@@ -322,11 +327,13 @@ class DancingLights {
                         }
                         try {
                             canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].alpha = DancingLights.getAnimationFrame(child.id, child.data.flags.world.dancingLights.type, child.data.flags.world.dancingLights.speed || 1, child.data.flags.world.dancingLights.sync || false);
-
+                            // Keeping in case we want to add this. Almost looks good.
+                            // canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].filters[1].direction = Math.random() * 360;
+                            // canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].filters[1].refresh();
                             if (child.data.flags.world.dancingLights.type === 'fire') {
                                 // Move the fire animation
-                                canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].light.transform.position.x = ((Math.random() - 0.5) * 15);
-                                canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].light.transform.position.y = ((Math.random() - 0.5) * 15);
+                                canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].light.transform.position.x = ((Math.random() - 0.5) * (child.id, child.data.flags.world.dancingLights.fireMovement || 15));
+                                canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].light.transform.position.y = ((Math.random() - 0.5) * (child.data.flags.world.dancingLights.fireMovement || 15));
                                 // Not ready to give up on skew/scale. Scale could be done by clearing and redrawing, but for now we'll stick with the position shift.
                                 // canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].light.transform.skew.x = ((Math.random() - 0.5) / 50);
                                 // canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].light.transform.skew.y = ((Math.random() - 0.5) / 50);
@@ -435,12 +442,14 @@ Hooks.once("canvasReady", () => {
         if (dancingLightOptions && dancingLightOptions.enabled) {
             if (dancingLightOptions.blurEnabled) {
                 source.filters = [new PIXI.filters.BlurFilter(dancingLightOptions.blurAmount)]
+                // Keeping in case we want to add this. Almost looks good.
+                // source.filters.push(new PIXI.filters.GlitchFilter({slices:30, offset: 5, direction: 45, average: true}));
             }
             source.alpha = DancingLights.lastAlpha[childID]
             if (dancingLightOptions.type === 'fire') {
                 try {
-                    source.light.transform.position.x = ((Math.random() - 0.5) * 15);
-                    source.light.transform.position.y = ((Math.random() - 0.5) * 15);
+                    source.light.transform.position.x = ((Math.random() - 0.5) * (dancingLightOptions.fireMovement || 15));
+                    source.light.transform.position.y = ((Math.random() - 0.5) * (dancingLightOptions.fireMovement || 15));
                     // canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].light.transform.skew.x = ((Math.random() - 0.5) / 50);
                     // canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].light.transform.skew.y = ((Math.random() - 0.5) / 50);
                 } catch (e) {}
