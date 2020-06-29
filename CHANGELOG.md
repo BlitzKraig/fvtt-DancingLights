@@ -1,3 +1,7 @@
+# 1.2.1 - 2020/06/29
+
+* Minor settings text updates
+
 # 1.2.0 - 2020/06/29
 
 * Greatly improved and re-enabled scene-wide lighting updates. Thanks to zeel on Discord for his help
