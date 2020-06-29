@@ -2,7 +2,7 @@
   "name": "DancingLights",
   "title": "Dancing Lights",
   "description": "Light customisation to allow flicker, blinking etc. per light. Designed to not trigger server light updates, and instead directly alter the rendered lightsource for performance",
-  "version": "1.1.4",
+  "version": "1.2.0",
   "author": "Blitzkraig",
   "scripts": ["./dancinglights.js", "./dependencies/chroma.min.js"],
   "styles": [],

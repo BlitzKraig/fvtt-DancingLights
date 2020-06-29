@@ -1,3 +1,8 @@
+# 1.2.0 - 2020/06/29
+
+* Greatly improved and re-enabled scene-wide lighting updates. Thanks to zeel on Discord for his help
+* Changed default bright vision dimming to 0.9
+
 # 1.1.4 - 2020/06/29
 
 * Temporarily disabled scene-wide lighting updates due to nasty bugs

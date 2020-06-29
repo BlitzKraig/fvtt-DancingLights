@@ -74,6 +74,20 @@ Example of Animate Dim enabled, on a fade light
 
 ![](./doc/fadedim.gif)
 
+## Troubleshooting
+
+### My token view is too dim!
+
+Disable the 'Dim token Bright Vision' option in module settings, or set the slider to a high number
+
+### My lights are dim in the centre, or I can't see the bright light
+
+Make sure your 'Blur Amount' isn't too high. Try disabling blur.
+
+### Your module broke X!
+
+Disable the module in 'Manage Modules'. I'm sorry for your loss.
+
 ## Manifest
 
 `https://raw.githubusercontent.com/BlitzKraig/fvtt-DancingLights/master/module.json`

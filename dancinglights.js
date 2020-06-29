@@ -208,7 +208,7 @@ class DancingLights {
         });
         let updateAll = DancingLights.getFormElement("Update All Lights", "Check this to automatically update all of the lights in the scene to match this one. This only updates the DancingLight options, not defaults like position etc.", "checkbox", "updateAll", "false", "Boolean");
 
-        $('button[name ="submit"]').before(`${dancingLightsHeader}${dancingLightsEnabled}${blurEnabled}${blurAmount}${danceType}${sync}${animateDim}${startColor}${endColor}${movementAmount}${speed}`)
+        $('button[name ="submit"]').before(`${dancingLightsHeader}${dancingLightsEnabled}${blurEnabled}${blurAmount}${danceType}${sync}${animateDim}${startColor}${endColor}${movementAmount}${speed}${updateAll}`)
     }
     /* Input form end */
 
@@ -376,42 +376,80 @@ class DancingLights {
         }, danceTimerTick));
     }
 
-    // Send all to updateAmbientLight, since we're not using the args for anything yet
-    // static onCreateAmbientLight(scene, light, temp, sceneID) {
-    //     DancingLights.destroyAllTimers();
-    //     DancingLights.createTimers();
-    // }
-    static onUpdateAmbientLightNoArgs() {
+    static forceReinit() {
         DancingLights.destroyAllTimers();
         DancingLights.createTimers();
     }
+
+    static async updateAllLights(scene, light) {
+        ui.notifications.notify(`Updating all lights in the scene, do not refresh!`);
+        let lightId = light.id;
+        const lights = game.scenes.viewed.data.lights;
+        lights.forEach((updateLight) => {
+            if (updateLight._id !== lightId) {
+                updateLight.flags.world.dancingLights = JSON.parse(JSON.stringify(light.flags.world.dancingLights));
+            }
+        });
+        let results = await canvas.lighting.updateMany(lights, {
+            diff: false
+        });
+        ui.notifications.notify(`All lights updated.`);
+        return results;
+    }
+
     static onUpdateAmbientLight(scene, light, custom, changes, sceneID) {
 
-        // TODO: Fix this
-        // if (light.flags.world && light.flags.world.dancingLights && light.flags.world.dancingLights.updateAll) {
-        //     light.flags.world.dancingLights.updateAll = false;
-        //     let lightId = light.id;
-        //     game.scenes.viewed.data.lights.forEach(ambientLight => {
-        //         if (ambientLight._id !== lightId) {
-        //             canvas.lighting.get(ambientLight._id).setFlag("world", "dancingLights", light.flags.world.dancingLights);
-        //         }
-        //     });
+        if (light.flags.world && light.flags.world.dancingLights && light.flags.world.dancingLights.updateAll) {
+            light.flags.world.dancingLights.updateAll = false;
+            (async () => {
+                console.time('lightPromise');
 
-        // }
+                await DancingLights.updateAllLights(scene, light);
+
+                console.timeEnd('lightPromise');
+            })();
+        }
+
         DancingLights.destroyAllTimers();
         DancingLights.createTimers();
     }
-}
-Hooks.on("renderLightConfig", DancingLights.onRenderLightConfig);
-Hooks.on("updateAmbientLight", DancingLights.onUpdateAmbientLight);
-Hooks.on("createAmbientLight", DancingLights.onUpdateAmbientLightNoArgs);
-Hooks.on("closeTokenConfig", DancingLights.onUpdateAmbientLightNoArgs);
-Hooks.once("canvasReady", () => {
-    // Forgive me -- This will probably break with some Foundry updates
-    // TODO: Add version checks with custom patches - This works with at least 0.6.2 -> 0.6.4
 
-    // 0.6.2 -> 0.6.4
-    /*
+    static onInit() {
+        game.settings.register("DancingLights", "dimBrightVision", {
+            name: "Dim token Bright Vision",
+            hint: "Changing this will refresh your page! Disable this to revert bright vision circles back to default. Note that you will not see some Dancing Lights effects properly while they are within your bright vision radius.",
+            scope: "world",
+            config: true,
+            default: true,
+            type: Boolean,
+            onChange: value => {
+                window.location.reload();
+            }
+        })
+        game.settings.register("DancingLights", "dimBrightVisionAmount", {
+            name: "Dim token Bright Vision alpha",
+            hint: "Changing this will refresh your page! Tweak how dim the Bright Vision radius is. 0.1 is very dim, 1 is fully bright",
+            scope: "world",
+            config: true,
+            type: Number,
+            range: { // If range is specified, the resulting setting will be a range slider
+                min: 0.1,
+                max: 1,
+                step: 0.05
+            },
+            default: 0.9,
+            onChange: value => {
+                window.location.reload();
+            }
+        })
+    }
+
+    static patchLighting() {
+        // Forgive me -- This will probably break with some Foundry updates
+        // TODO: Add version checks with custom patches - This works with at least 0.6.2 -> 0.6.4
+
+        // 0.6.2 -> 0.6.4
+        /*
   _drawSource(hex, {x, y, radius, fov}={}) {
     let source = new PIXI.Container();
     source.light = source.addChild(new PIXI.Graphics());
@@ -422,156 +460,130 @@ Hooks.once("canvasReady", () => {
     return source;
   }
     */
-    canvas.sight._drawSource = function (hex, {
-        x,
-        y,
-        radius,
-        fov
-    } = {}) {
-        /* Monkeypatch block */
-        // Get x,y from lights to determine correct light, use dancinglights values from that
-        let dancingLightOptions;
-        let childID;
-        canvas.lighting.objects.children.forEach((child) => {
-            if (hex === 0 && child.x == x && child.y == y && child.data.flags.world) {
-                dancingLightOptions = child.data.flags.world.dancingLights;
-                childID = child.id;
-            }
-        });
-        /* Monkeypatch block end */
-
-        let source = new PIXI.Container();
-        source.light = source.addChild(new PIXI.Graphics());
-        // TODO: Remove source.children[0] and redraw to scale
-        // $pixi.children[0] = $pixi.addChild(new PIXI.Graphics());
-        // $pixi.children[0].beginFill(0xFF0000, 1.0).drawCircle(1450, 1350, 100).endFill();
-        source.light.beginFill(hex, 1.0).drawCircle(x, y, radius).endFill();
-        source.fov = source.addChild(new PIXI.Graphics());
-        source.fov.beginFill(0xFFFFFF, 1.0).drawPolygon(fov).endFill();
-        source.light.mask = source.fov;
-
-        /* Monkeypatch block */
-        if (!childID && game.settings.get("DancingLights", "dimBrightVision")) {
-            source.alpha = game.settings.get("DancingLights", "dimBrightVisionAmount") || 0.5;
-        }
-        if (dancingLightOptions && dancingLightOptions.enabled) {
-            if (dancingLightOptions.blurEnabled) {
-                source.filters = [new PIXI.filters.BlurFilter(dancingLightOptions.blurAmount)]
-                // Keeping in case we want to add this. Almost looks good.
-                // source.filters.push(new PIXI.filters.GlitchFilter({slices:30, offset: 5, direction: 45, average: true}));
-            }
-            source.alpha = DancingLights.lastAlpha[childID]
-            if (dancingLightOptions.type === 'fire') {
-                try {
-                    source.light.transform.position.x = ((Math.random() - 0.5) * (dancingLightOptions.fireMovement || 15));
-                    source.light.transform.position.y = ((Math.random() - 0.5) * (dancingLightOptions.fireMovement || 15));
-                    // canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].light.transform.skew.x = ((Math.random() - 0.5) / 50);
-                    // canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].light.transform.skew.y = ((Math.random() - 0.5) / 50);
-                } catch (e) {}
-            }
-        }
-        /* Monkeypatch block end */
-        return source;
-    }
-
-    // 0.6.2 -> 0.6.4
-    /*
-     update(alpha=null) {
-         const d = canvas.dimensions;
-         const c = this.lighting;
-
-         // Draw darkness layer
-         this._darkness = alpha !== null ? alpha : canvas.scene.data.darkness;
-         c.darkness.clear();
-         const darknessPenalty = 0.8;
-         let darknessColor = canvas.scene.getFlag("core", "darknessColor") || CONFIG.Canvas.darknessColor;
-         if ( typeof darknessColor === "string" ) darknessColor = colorStringToHex(darknessColor);
-         c.darkness.beginFill(darknessColor, this._darkness * darknessPenalty)
-           .drawRect(0, 0, d.width, d.height)
-           .endFill();
-
-         // Draw lighting atop the darkness
-         c.lights.clear();
-         for ( let s of canvas.sight.sources.lights.values() ) {
-           if ( s.darknessThreshold <= this._darkness ) {
-             c.lights.beginFill(s.color, s.alpha).drawPolygon(s.fov).endFill();
-           }
-         }
-       }
-    */
-
-    canvas.lighting.update = function (alpha = null) {
-        const d = canvas.dimensions;
-        const c = this.lighting;
-
-        // Draw darkness layer
-        this._darkness = alpha !== null ? alpha : canvas.scene.data.darkness;
-        c.darkness.clear();
-        const darknessPenalty = 0.8;
-        let darknessColor = canvas.scene.getFlag("core", "darknessColor") || CONFIG.Canvas.darknessColor;
-        if (typeof darknessColor === "string") darknessColor = colorStringToHex(darknessColor);
-        c.darkness.beginFill(darknessColor, this._darkness * darknessPenalty)
-            .drawRect(0, 0, d.width, d.height)
-            .endFill();
-
-        // Draw lighting atop the darkness
-        c.lights.clear();
-        for (let s of canvas.sight.sources.lights.values()) {
+        canvas.sight._drawSource = function (hex, {
+            x,
+            y,
+            radius,
+            fov
+        } = {}) {
             /* Monkeypatch block */
+            // Get x,y from lights to determine correct light, use dancinglights values from that
             let dancingLightOptions;
             let childID;
             canvas.lighting.objects.children.forEach((child) => {
-                if (child.x == s.x && child.y == s.y && child.data.flags.world) {
+                if (hex === 0 && child.x == x && child.y == y && child.data.flags.world) {
                     dancingLightOptions = child.data.flags.world.dancingLights;
                     childID = child.id;
                 }
             });
-            if (s.darknessThreshold <= this._darkness) {
-                if (dancingLightOptions && dancingLightOptions.enabled) {
-                    if (dancingLightOptions.type === 'fire') {
-                        canvas.lighting.lighting.lights.beginFill(DancingLights.getFireColor(childID, dancingLightOptions.startColor || '#ffc08f', dancingLightOptions.endColor || '#f8e0af'), dancingLightOptions.animateDimAlpha ? 1 - (1 - (DancingLights.lastAlpha[childID])) / 4 || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
-                    } else {
-                        canvas.lighting.lighting.lights.beginFill(s.color, dancingLightOptions.animateDimAlpha ? 1 - (1 - DancingLights.lastAlpha[childID]) / 2 || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
-                    }
-                } else {
-                    canvas.lighting.lighting.lights.beginFill(s.color, s.alpha).drawPolygon(s.fov).endFill();
+            /* Monkeypatch block end */
+
+            let source = new PIXI.Container();
+            source.light = source.addChild(new PIXI.Graphics());
+            // TODO: Remove source.children[0] and redraw to scale
+            // $pixi.children[0] = $pixi.addChild(new PIXI.Graphics());
+            // $pixi.children[0].beginFill(0xFF0000, 1.0).drawCircle(1450, 1350, 100).endFill();
+            source.light.beginFill(hex, 1.0).drawCircle(x, y, radius).endFill();
+            source.fov = source.addChild(new PIXI.Graphics());
+            source.fov.beginFill(0xFFFFFF, 1.0).drawPolygon(fov).endFill();
+            source.light.mask = source.fov;
+
+            /* Monkeypatch block */
+            if (!childID && game.settings.get("DancingLights", "dimBrightVision")) {
+                source.alpha = game.settings.get("DancingLights", "dimBrightVisionAmount") || 0.5;
+            }
+            if (dancingLightOptions && dancingLightOptions.enabled) {
+                if (dancingLightOptions.blurEnabled) {
+                    source.filters = [new PIXI.filters.BlurFilter(dancingLightOptions.blurAmount)]
+                    // Keeping in case we want to add this. Almost looks good.
+                    // source.filters.push(new PIXI.filters.GlitchFilter({slices:30, offset: 5, direction: 45, average: true}));
+                }
+                source.alpha = DancingLights.lastAlpha[childID]
+                if (dancingLightOptions.type === 'fire') {
+                    try {
+                        source.light.transform.position.x = ((Math.random() - 0.5) * (dancingLightOptions.fireMovement || 15));
+                        source.light.transform.position.y = ((Math.random() - 0.5) * (dancingLightOptions.fireMovement || 15));
+                        // canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].light.transform.skew.x = ((Math.random() - 0.5) / 50);
+                        // canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].light.transform.skew.y = ((Math.random() - 0.5) / 50);
+                    } catch (e) {}
                 }
             }
             /* Monkeypatch block end */
+            return source;
+        }
+
+        // 0.6.2 -> 0.6.4
+        /*
+         update(alpha=null) {
+             const d = canvas.dimensions;
+             const c = this.lighting;
+
+             // Draw darkness layer
+             this._darkness = alpha !== null ? alpha : canvas.scene.data.darkness;
+             c.darkness.clear();
+             const darknessPenalty = 0.8;
+             let darknessColor = canvas.scene.getFlag("core", "darknessColor") || CONFIG.Canvas.darknessColor;
+             if ( typeof darknessColor === "string" ) darknessColor = colorStringToHex(darknessColor);
+             c.darkness.beginFill(darknessColor, this._darkness * darknessPenalty)
+               .drawRect(0, 0, d.width, d.height)
+               .endFill();
+
+             // Draw lighting atop the darkness
+             c.lights.clear();
+             for ( let s of canvas.sight.sources.lights.values() ) {
+               if ( s.darknessThreshold <= this._darkness ) {
+                 c.lights.beginFill(s.color, s.alpha).drawPolygon(s.fov).endFill();
+               }
+             }
+           }
+        */
+
+        canvas.lighting.update = function (alpha = null) {
+            const d = canvas.dimensions;
+            const c = this.lighting;
+
+            // Draw darkness layer
+            this._darkness = alpha !== null ? alpha : canvas.scene.data.darkness;
+            c.darkness.clear();
+            const darknessPenalty = 0.8;
+            let darknessColor = canvas.scene.getFlag("core", "darknessColor") || CONFIG.Canvas.darknessColor;
+            if (typeof darknessColor === "string") darknessColor = colorStringToHex(darknessColor);
+            c.darkness.beginFill(darknessColor, this._darkness * darknessPenalty)
+                .drawRect(0, 0, d.width, d.height)
+                .endFill();
+
+            // Draw lighting atop the darkness
+            c.lights.clear();
+            for (let s of canvas.sight.sources.lights.values()) {
+                /* Monkeypatch block */
+                let dancingLightOptions;
+                let childID;
+                canvas.lighting.objects.children.forEach((child) => {
+                    if (child.x == s.x && child.y == s.y && child.data.flags.world) {
+                        dancingLightOptions = child.data.flags.world.dancingLights;
+                        childID = child.id;
+                    }
+                });
+                if (s.darknessThreshold <= this._darkness) {
+                    if (dancingLightOptions && dancingLightOptions.enabled) {
+                        if (dancingLightOptions.type === 'fire') {
+                            canvas.lighting.lighting.lights.beginFill(DancingLights.getFireColor(childID, dancingLightOptions.startColor || '#ffc08f', dancingLightOptions.endColor || '#f8e0af'), dancingLightOptions.animateDimAlpha ? 1 - (1 - (DancingLights.lastAlpha[childID])) / 4 || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
+                        } else {
+                            canvas.lighting.lighting.lights.beginFill(s.color, dancingLightOptions.animateDimAlpha ? 1 - (1 - DancingLights.lastAlpha[childID]) / 2 || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
+                        }
+                    } else {
+                        canvas.lighting.lighting.lights.beginFill(s.color, s.alpha).drawPolygon(s.fov).endFill();
+                    }
+                }
+                /* Monkeypatch block end */
+            }
         }
     }
-});
-Hooks.on("init", () => {
-    game.settings.register("DancingLights", "dimBrightVision", {
-        name: "Dim token Bright Vision",
-        hint: "Changing this will refresh your page! Disable this to revert bright vision circles back to default. Note that you will not see some Dancing Lights effects properly while they are within your bright vision radius.",
-        scope: "world",
-        config: true,
-        default: true,
-        type: Boolean,
-        onChange: value => {
-            window.location.reload();
-        }
-    })
-    game.settings.register("DancingLights", "dimBrightVisionAmount", {
-        name: "Dim token Bright Vision alpha",
-        hint: "Changing this will refresh your page! Tweak how dim the Bright Vision radius is. 0.1 is very dim, 1 is fully bright",
-        scope: "world",
-        config: true,
-        type: Number,
-        range: { // If range is specified, the resulting setting will be a range slider
-            min: 0.1,
-            max: 1,
-            step: 0.1
-        },
-        default: 0.7,
-        onChange: value => {
-            window.location.reload();
-        }
-    })
-
-});
-Hooks.on("canvasReady", () => {
-    DancingLights.destroyAllTimers();
-    DancingLights.createTimers();
-});
+}
+Hooks.on("renderLightConfig", DancingLights.onRenderLightConfig);
+Hooks.on("updateAmbientLight", DancingLights.onUpdateAmbientLight);
+Hooks.on("createAmbientLight", DancingLights.forceReinit);
+Hooks.on("closeTokenConfig", DancingLights.forceReinit);
+Hooks.once("canvasReady", DancingLights.patchLighting);
+Hooks.on("init", DancingLights.onInit);
+Hooks.on("canvasReady", DancingLights.forceReinit);
