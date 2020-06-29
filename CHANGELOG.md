@@ -1,3 +1,7 @@
+# 1.1.3 - 2020/06/29
+
+* Updated scene-wide light update to properly set the flags
+
 # 1.1.2 - 2020/06/29
 
 * Updated scene-wide light update to viewed instead of active

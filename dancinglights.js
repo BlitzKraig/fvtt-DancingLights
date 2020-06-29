@@ -391,10 +391,7 @@ class DancingLights {
             let lightId = light.id;
             game.scenes.viewed.data.lights.forEach(ambientLight => {
                 if (ambientLight._id !== lightId) {
-                    if (!ambientLight.flags.world) {
-                        ambientLight.flags.world = {};
-                    }
-                    ambientLight.flags.world.dancingLights = JSON.parse(JSON.stringify(light.flags.world.dancingLights));
+                    canvas.lighting.get(ambientLight._id).setFlag("world", "dancingLights", light.flags.world.dancingLights);
                 }
             });
 
