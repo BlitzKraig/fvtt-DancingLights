@@ -206,8 +206,9 @@ class DancingLights {
             max: 10,
             step: 1
         });
+        let updateAll = DancingLights.getFormElement("Update All Lights", "Check this to automatically update all of the lights in the scene to match this one", "checkbox", "updateAll", "false", "Boolean");
 
-        $('button[name ="submit"]').before(`${dancingLightsHeader}${dancingLightsEnabled}${blurEnabled}${blurAmount}${danceType}${sync}${animateDim}${startColor}${endColor}${movementAmount}${speed}`)
+        $('button[name ="submit"]').before(`${dancingLightsHeader}${dancingLightsEnabled}${blurEnabled}${blurAmount}${danceType}${sync}${animateDim}${startColor}${endColor}${movementAmount}${speed}${updateAll}`)
     }
     /* Input form end */
 
@@ -317,7 +318,6 @@ class DancingLights {
                                 DancingLights.brightPairs[child.id] = index;
                             }
                             if(!DancingLights.brightPairs[child.id] && game.settings.get("DancingLights", "dimBrightVision")){
-                                console.log('ALPHA');
                                 channelChild.alpha = 0.5;
                             }
                         });
@@ -381,16 +381,32 @@ class DancingLights {
     //     DancingLights.destroyAllTimers();
     //     DancingLights.createTimers();
     // }
-
+    static onUpdateAmbientLightNoArgs() {
+        DancingLights.destroyAllTimers();
+        DancingLights.createTimers();
+    }
     static onUpdateAmbientLight(scene, light, custom, changes, sceneID) {
+        if(light.flags.world && light.flags.world.dancingLights && light.flags.world.dancingLights.updateAll){
+            light.flags.world.dancingLights.updateAll = false;
+            let lightId = light.id;
+            game.scenes.active.data.lights.forEach(ambientLight => {
+               if(ambientLight._id !== lightId){
+                   if(!ambientLight.flags.world){
+                    ambientLight.flags.world = {};
+                   }
+                   ambientLight.flags.world.dancingLights = JSON.parse(JSON.stringify(light.flags.world.dancingLights));
+               }
+            });
+
+        }
         DancingLights.destroyAllTimers();
         DancingLights.createTimers();
     }
 }
 Hooks.on("renderLightConfig", DancingLights.onRenderLightConfig);
 Hooks.on("updateAmbientLight", DancingLights.onUpdateAmbientLight);
-Hooks.on("createAmbientLight", DancingLights.onUpdateAmbientLight);
-Hooks.on("closeTokenConfig", DancingLights.onUpdateAmbientLight);
+Hooks.on("createAmbientLight", DancingLights.onUpdateAmbientLightNoArgs);
+Hooks.on("closeTokenConfig", DancingLights.onUpdateAmbientLightNoArgs);
 Hooks.once("canvasReady", () => {
     // Forgive me -- This will probably break with some Foundry updates
     // TODO: Add version checks with custom patches - This works with at least 0.6.2 -> 0.6.4
