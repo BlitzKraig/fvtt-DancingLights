@@ -291,7 +291,6 @@ class DancingLights {
 
     }
 
-    static fireColorFrame = 0;
     static getFireColor(id, startColor, endColor) {
         let fireColorScale = chroma.scale([startColor, endColor]).domain([0.21, 1]); //Domain retrieved from fireanim frames, change this when we update fireanim // TODO: Improve this to grab dynamically
         return fireColorScale(DancingLights.lastAlpha[id]).num();
@@ -342,10 +341,6 @@ class DancingLights {
         });
         // Global timer
         DancingLights.timers.push(setInterval(() => {
-            DancingLights.fireColorFrame++;
-            if (DancingLights.fireColorFrame >= 20) {
-                DancingLights.fireColorFrame = 0;
-            }
             try {
                 canvas.lighting.lighting.lights.clear();
             } catch (e) {}
