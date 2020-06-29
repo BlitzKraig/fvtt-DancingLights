@@ -317,8 +317,8 @@ class DancingLights {
                             if (channelChild.light.geometry.graphicsData[0].shape.x === child.x && channelChild.light.geometry.graphicsData[0].shape.y === child.y) {
                                 DancingLights.brightPairs[child.id] = index;
                             }
-                            if(!DancingLights.brightPairs[child.id] && game.settings.get("DancingLights", "dimBrightVision")){
-                                channelChild.alpha = 0.5;
+                            if (!DancingLights.brightPairs[child.id] && game.settings.get("DancingLights", "dimBrightVision")) {
+                                channelChild.alpha = game.settings.get("DancingLights", "dimBrightVisionAmount") || 0.5;
                             }
                         });
                     } else {
@@ -386,16 +386,16 @@ class DancingLights {
         DancingLights.createTimers();
     }
     static onUpdateAmbientLight(scene, light, custom, changes, sceneID) {
-        if(light.flags.world && light.flags.world.dancingLights && light.flags.world.dancingLights.updateAll){
+        if (light.flags.world && light.flags.world.dancingLights && light.flags.world.dancingLights.updateAll) {
             light.flags.world.dancingLights.updateAll = false;
             let lightId = light.id;
             game.scenes.active.data.lights.forEach(ambientLight => {
-               if(ambientLight._id !== lightId){
-                   if(!ambientLight.flags.world){
-                    ambientLight.flags.world = {};
-                   }
-                   ambientLight.flags.world.dancingLights = JSON.parse(JSON.stringify(light.flags.world.dancingLights));
-               }
+                if (ambientLight._id !== lightId) {
+                    if (!ambientLight.flags.world) {
+                        ambientLight.flags.world = {};
+                    }
+                    ambientLight.flags.world.dancingLights = JSON.parse(JSON.stringify(light.flags.world.dancingLights));
+                }
             });
 
         }
@@ -452,8 +452,8 @@ Hooks.once("canvasReady", () => {
         source.light.mask = source.fov;
 
         /* Monkeypatch block */
-        if(!childID && game.settings.get("DancingLights", "dimBrightVision")){
-            source.alpha = 0.5;
+        if (!childID && game.settings.get("DancingLights", "dimBrightVision")) {
+            source.alpha = game.settings.get("DancingLights", "dimBrightVisionAmount") || 0.5;
         }
         if (dancingLightOptions && dancingLightOptions.enabled) {
             if (dancingLightOptions.blurEnabled) {
@@ -544,12 +544,28 @@ Hooks.once("canvasReady", () => {
 });
 Hooks.on("init", () => {
     game.settings.register("DancingLights", "dimBrightVision", {
-        name: "Dim token Bright Vision slightly",
+        name: "Dim token Bright Vision",
         hint: "Changing this will refresh your page! Disable this to revert bright vision circles back to default. Note that you will not see some Dancing Lights effects properly while they are within your bright vision radius.",
         scope: "world",
         config: true,
         default: true,
         type: Boolean,
+        onChange: value => {
+            window.location.reload();
+        }
+    })
+    game.settings.register("DancingLights", "dimBrightVisionAmount", {
+        name: "Dim token Bright Vision alpha",
+        hint: "Changing this will refresh your page! Tweak how dim the Bright Vision radius is. 0 is very dim, 1 is fully bright",
+        scope: "world",
+        config: true,
+        type: Number,
+        range: { // If range is specified, the resulting setting will be a range slider
+            min: 0.1,
+            max: 1,
+            step: 0.1
+        },
+        default: 0.5,
         onChange: value => {
             window.location.reload();
         }
