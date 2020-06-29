@@ -312,6 +312,10 @@ class DancingLights {
                             if (channelChild.light.geometry.graphicsData[0].shape.x === child.x && channelChild.light.geometry.graphicsData[0].shape.y === child.y) {
                                 DancingLights.brightPairs[child.id] = index;
                             }
+                            if(!DancingLights.brightPairs[child.id] && game.settings.get("DancingLights", "dimBrightVision")){
+                                console.log('ALPHA');
+                                channelChild.alpha = 0.5;
+                            }
                         });
                     } else {
                         if (danceFrameCounter++ >= 1000) {
@@ -370,10 +374,11 @@ class DancingLights {
         }, danceTimerTick));
     }
 
-    static onCreateAmbientLight(scene, light, temp, sceneID) {
-        DancingLights.destroyAllTimers();
-        DancingLights.createTimers();
-    }
+    // Send all to updateAmbientLight, since we're not using the args for anything yet
+    // static onCreateAmbientLight(scene, light, temp, sceneID) {
+    //     DancingLights.destroyAllTimers();
+    //     DancingLights.createTimers();
+    // }
 
     static onUpdateAmbientLight(scene, light, custom, changes, sceneID) {
         DancingLights.destroyAllTimers();
@@ -383,6 +388,7 @@ class DancingLights {
 Hooks.on("renderLightConfig", DancingLights.onRenderLightConfig);
 Hooks.on("updateAmbientLight", DancingLights.onUpdateAmbientLight);
 Hooks.on("createAmbientLight", DancingLights.onUpdateAmbientLight);
+Hooks.on("closeTokenConfig", DancingLights.onUpdateAmbientLight);
 Hooks.once("canvasReady", () => {
     // Forgive me -- This will probably break with some Foundry updates
     // TODO: Add version checks with custom patches - This works with at least 0.6.2 -> 0.6.4
@@ -428,6 +434,9 @@ Hooks.once("canvasReady", () => {
         source.light.mask = source.fov;
 
         /* Monkeypatch block */
+        if(!childID && game.settings.get("DancingLights", "dimBrightVision")){
+            source.alpha = 0.5;
+        }
         if (dancingLightOptions && dancingLightOptions.enabled) {
             if (dancingLightOptions.blurEnabled) {
                 source.filters = [new PIXI.filters.BlurFilter(dancingLightOptions.blurAmount)]
@@ -512,6 +521,20 @@ Hooks.once("canvasReady", () => {
             /* Monkeypatch block end */
         }
     }
+});
+Hooks.on("init", () => {
+    game.settings.register("DancingLights", "dimBrightVision", {
+        name: "Dim token Bright Vision slightly",
+        hint: "Changing this will refresh your page! Disable this to revert bright vision circles back to default. Note that you will not see some Dancing Lights effects properly while they are within your bright vision radius.",
+        scope: "world",
+        config: true,
+        default: true,
+        type: Boolean,
+        onChange: value => {
+            window.location.reload();
+        }
+    })
+
 });
 Hooks.on("canvasReady", () => {
     DancingLights.destroyAllTimers();
