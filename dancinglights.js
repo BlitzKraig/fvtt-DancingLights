@@ -206,7 +206,7 @@ class DancingLights {
             max: 10,
             step: 1
         });
-        let updateAll = DancingLights.getFormElement("Update All Lights", "Check this to automatically update all of the lights in the scene to match this one", "checkbox", "updateAll", "false", "Boolean");
+        let updateAll = DancingLights.getFormElement("Update All Lights", "Check this to automatically update all of the lights in the scene to match this one. This only updates the DancingLight options, not defaults like position etc.", "checkbox", "updateAll", "false", "Boolean");
 
         $('button[name ="submit"]').before(`${dancingLightsHeader}${dancingLightsEnabled}${blurEnabled}${blurAmount}${danceType}${sync}${animateDim}${startColor}${endColor}${movementAmount}${speed}${updateAll}`)
     }
