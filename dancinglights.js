@@ -389,7 +389,7 @@ class DancingLights {
         if (light.flags.world && light.flags.world.dancingLights && light.flags.world.dancingLights.updateAll) {
             light.flags.world.dancingLights.updateAll = false;
             let lightId = light.id;
-            game.scenes.active.data.lights.forEach(ambientLight => {
+            game.scenes.viewed.data.lights.forEach(ambientLight => {
                 if (ambientLight._id !== lightId) {
                     if (!ambientLight.flags.world) {
                         ambientLight.flags.world = {};
@@ -556,7 +556,7 @@ Hooks.on("init", () => {
     })
     game.settings.register("DancingLights", "dimBrightVisionAmount", {
         name: "Dim token Bright Vision alpha",
-        hint: "Changing this will refresh your page! Tweak how dim the Bright Vision radius is. 0 is very dim, 1 is fully bright",
+        hint: "Changing this will refresh your page! Tweak how dim the Bright Vision radius is. 0.1 is very dim, 1 is fully bright",
         scope: "world",
         config: true,
         type: Number,
@@ -565,7 +565,7 @@ Hooks.on("init", () => {
             max: 1,
             step: 0.1
         },
-        default: 0.5,
+        default: 0.7,
         onChange: value => {
             window.location.reload();
         }

@@ -1,3 +1,7 @@
+# 1.1.2 - 2020/06/29
+
+* Updated scene-wide light update to viewed instead of active
+
 # 1.1.1 - 2020/06/29
 
 * Added slider in module settings to customize how dim the tokens Bright Vision is
