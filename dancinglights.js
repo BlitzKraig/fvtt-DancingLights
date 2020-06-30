@@ -197,7 +197,7 @@ class DancingLights {
             max: 100,
             step: 1
         });
-        let danceType = DancingLights.getFormElement("Dancing Lights Type", "Select 'none' to disable the animations (if you just want the blur for example)", "select", "type", lightConfig.object.data.flags.world.dancingLights.type || "fire", "String", {
+        let danceType = DancingLights.getFormElement("Dancing Lights Type", "Select 'none' to disable the animations (if you just want the blur for example)", "select", "type", lightConfig.object.data.flags.world.dancingLights.type || "none", "String", {
             values: ["fire", "blink", "fade", "electricfault", "none"],
             onChange: `DancingLights.displayExtendedOptions(this.value !== "none", "typeOptions"); DancingLights.displayExtendedOptions(this.value == "fire", "fireOptions");`
         });
@@ -241,7 +241,7 @@ class DancingLights {
 
         DancingLights.displayExtendedOptions(lightConfig.object.data.flags.world.dancingLights.enabled || false, "dancingLightsOptions");
         DancingLights.displayExtendedOptions(lightConfig.object.data.flags.world.dancingLights.blurEnabled || false, "blurOptions");
-        DancingLights.displayExtendedOptions(lightConfig.object.data.flags.world.dancingLights.type !== 'none', 'typeOptions');
+        DancingLights.displayExtendedOptions(lightConfig.object.data.flags.world.dancingLights.type && lightConfig.object.data.flags.world.dancingLights.type !== 'none', 'typeOptions');
         DancingLights.displayExtendedOptions(lightConfig.object.data.flags.world.dancingLights.type == 'fire', 'fireOptions');
         DancingLights.displayExtendedOptions(false, 'updateExtendedOptions');
         DancingLights.displayExtendedOptions(false, 'granularExtendedOptions');

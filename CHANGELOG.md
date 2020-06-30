@@ -1,3 +1,7 @@
+# 1.3.1 - 2020/06/30
+
+* Fixed settings display for new lights not rendering correctly
+
 # 1.3.0 - 2020/06/30
 
 * Added the ability to optionally update lighting scene-wide with the lights 'standard' settings, as well as the DancingLight settings
