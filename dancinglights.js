@@ -140,20 +140,20 @@ class DancingLights {
         <label>${label}</label>
         <div class="form-fields">`;
         if (inputType === "range") {
-            element += `<input type="range" name="flags.world.dancingLights.${name}" value="${value}" min="${opt.min}" max="${opt.max}" step="${opt.step}" data-dtype="${dType}">
+            element += `<input type="range" name="flags.DancingLights.${name}" value="${value}" min="${opt.min}" max="${opt.max}" step="${opt.step}" data-dtype="${dType}">
             <span class="range-value">${value}</span>`;
         } else if (inputType === "select") {
-            element += `<select name="flags.world.dancingLights.${name}" ${opt.onChange?`onChange='${opt.onChange}'`:''}>`;
+            element += `<select name="flags.DancingLights.${name}" ${opt.onChange?`onChange='${opt.onChange}'`:''}>`;
             opt.values.forEach(sValue => {
                 element += `<option value="${sValue}"${value===sValue?'selected="selected"':''}>${sValue}</option>`
             });
             element += `</select>`;
 
         } else if (inputType === "color") {
-            element += `<input class="color" type="text" name="flags.world.dancingLights.${name}" value="${value}" data-dtype="String"></input>`
-            element += `<input type="color" value="${value}" data-edit="flags.world.dancingLights.${name}">`
+            element += `<input class="color" type="text" name="flags.DancingLights.${name}" value="${value}" data-dtype="String"></input>`
+            element += `<input type="color" value="${value}" data-edit="flags.DancingLights.${name}">`
         } else {
-            element += `<input type="${inputType}" name="flags.world.dancingLights.${name}" value="${value}" data-dtype="${dType}" ${inputType=='checkbox' && value === true?'checked':''} ${inputType =='checkbox' && opt && opt.onClick?`onclick='${opt.onClick}'`:''} >`;
+            element += `<input type="${inputType}" name="flags.DancingLights.${name}" value="${value}" data-dtype="${dType}" ${inputType=='checkbox' && value === true?'checked':''} ${inputType =='checkbox' && opt && opt.onClick?`onclick='${opt.onClick}'`:''} >`;
         }
         element += `</div>
         <p class="hint">${hint}</p>
@@ -178,39 +178,36 @@ class DancingLights {
     }
 
     static addConfig(element, lightConfig) {
-        if (!lightConfig.object.data.flags.world) {
-            lightConfig.object.data.flags.world = {};
-        }
-        if (!lightConfig.object.data.flags.world.dancingLights) {
-            lightConfig.object.data.flags.world.dancingLights = {};
+        if (!lightConfig.object.data.flags.DancingLights) {
+            lightConfig.object.data.flags.DancingLights = {};
         }
 
         let dancingLightsHeader = `<h2>Dancing Lights config</h2>`;
-        let dancingLightsEnabled = DancingLights.getFormElement("Enable Dancing Lights", "Enable/disable effects on this light", "checkbox", "enabled", lightConfig.object.data.flags.world.dancingLights.enabled || false, "Boolean", {
+        let dancingLightsEnabled = DancingLights.getFormElement("Enable Dancing Lights", "Enable/disable effects on this light", "checkbox", "enabled", lightConfig.object.data.flags.DancingLights.enabled || false, "Boolean", {
             onClick: 'DancingLights.displayExtendedOptions(this.checked, "dancingLightsOptions");'
         });
-        let blurEnabled = DancingLights.getFormElement("Enable Blur", "", "checkbox", "blurEnabled", lightConfig.object.data.flags.world.dancingLights.blurEnabled || false, "Boolean", {
+        let blurEnabled = DancingLights.getFormElement("Enable Blur", "", "checkbox", "blurEnabled", lightConfig.object.data.flags.DancingLights.blurEnabled || false, "Boolean", {
             onClick: 'DancingLights.displayExtendedOptions(this.checked, "blurOptions");'
         });
-        let blurAmount = DancingLights.getFormElement("Blur Amount", "", "range", "blurAmount", typeof lightConfig.object.data.flags.world.dancingLights.blurAmount !== 'undefined' ? lightConfig.object.data.flags.world.dancingLights.blurAmount : 10, "Number", {
+        let blurAmount = DancingLights.getFormElement("Blur Amount", "", "range", "blurAmount", typeof lightConfig.object.data.flags.DancingLights.blurAmount !== 'undefined' ? lightConfig.object.data.flags.DancingLights.blurAmount : 10, "Number", {
             min: 0,
             max: 100,
             step: 1
         });
-        let danceType = DancingLights.getFormElement("Dancing Lights Type", "Select 'none' to disable the animations (if you just want the blur for example)", "select", "type", lightConfig.object.data.flags.world.dancingLights.type || "none", "String", {
+        let danceType = DancingLights.getFormElement("Dancing Lights Type", "Select 'none' to disable the animations (if you just want the blur for example)", "select", "type", lightConfig.object.data.flags.DancingLights.type || "none", "String", {
             values: ["fire", "blink", "fade", "electricfault", "none"],
             onChange: `DancingLights.displayExtendedOptions(this.value !== "none", "typeOptions"); DancingLights.displayExtendedOptions(this.value == "fire", "fireOptions");`
         });
-        let sync = DancingLights.getFormElement("Enable Sync", "Synchronize animations. Lights with the same animation type & speed with this checked will animate together", "checkbox", "sync", lightConfig.object.data.flags.world.dancingLights.sync || false, "Boolean");
-        let animateDim = DancingLights.getFormElement("Enable Dim Animation", "If checked, the 'dim' light will also fade based on a fraction of the bright light. This overrides the 'Light Opacity' in the default light settings. Disable this to keep the opacity as set.", "checkbox", "animateDimAlpha", lightConfig.object.data.flags.world.dancingLights.animateDimAlpha || false, "Boolean"); //animateDimAlpha
-        let startColor = DancingLights.getFormElement("Fire Color Dim", "The light color when the fire is at its dimmest", "color", "startColor", lightConfig.object.data.flags.world.dancingLights.startColor || "#ffc08f", "String");
-        let endColor = DancingLights.getFormElement("Fire Color Bright", "The light color when the fire is at its brightest", "color", "endColor", lightConfig.object.data.flags.world.dancingLights.endColor || "#f8e0af", "String");
-        let movementAmount = DancingLights.getFormElement("Fire Movement Amount", "How much the fire position flickers", "range", "fireMovement", typeof lightConfig.object.data.flags.world.dancingLights.fireMovement !== 'undefined' ? lightConfig.object.data.flags.world.dancingLights.fireMovement : 15, "Number", {
+        let sync = DancingLights.getFormElement("Enable Sync", "Synchronize animations. Lights with the same animation type & speed with this checked will animate together", "checkbox", "sync", lightConfig.object.data.flags.DancingLights.sync || false, "Boolean");
+        let animateDim = DancingLights.getFormElement("Enable Dim Animation", "If checked, the 'dim' light will also fade based on a fraction of the bright light. This overrides the 'Light Opacity' in the default light settings. Disable this to keep the opacity as set.", "checkbox", "animateDimAlpha", lightConfig.object.data.flags.DancingLights.animateDimAlpha || false, "Boolean"); //animateDimAlpha
+        let startColor = DancingLights.getFormElement("Fire Color Dim", "The light color when the fire is at its dimmest", "color", "startColor", lightConfig.object.data.flags.DancingLights.startColor || "#ffc08f", "String");
+        let endColor = DancingLights.getFormElement("Fire Color Bright", "The light color when the fire is at its brightest", "color", "endColor", lightConfig.object.data.flags.DancingLights.endColor || "#f8e0af", "String");
+        let movementAmount = DancingLights.getFormElement("Fire Movement Amount", "How much the fire position flickers", "range", "fireMovement", typeof lightConfig.object.data.flags.DancingLights.fireMovement !== 'undefined' ? lightConfig.object.data.flags.DancingLights.fireMovement : 15, "Number", {
             min: 1,
             max: 40,
             step: 1
         });
-        let speed = DancingLights.getFormElement("Speed", "The speed of the 'animations'. Lower is faster. Note that the movement of the 'fire' is not affected by this, only the alpha changes. The 'electricfault' type triggers more often with higher numbers here.", "range", "speed", typeof lightConfig.object.data.flags.world.dancingLights.speed !== 'undefined' ? lightConfig.object.data.flags.world.dancingLights.speed : 1, "Number", {
+        let speed = DancingLights.getFormElement("Speed", "The speed of the 'animations'. Lower is faster. Note that the movement of the 'fire' is not affected by this, only the alpha changes. The 'electricfault' type triggers more often with higher numbers here.", "range", "speed", typeof lightConfig.object.data.flags.DancingLights.speed !== 'undefined' ? lightConfig.object.data.flags.DancingLights.speed : 1, "Number", {
             min: 1,
             max: 10,
             step: 1
@@ -239,10 +236,10 @@ class DancingLights {
         ${sync}${animateDim}${speed}</div></div>${updateAll}<div id="updateExtendedOptions">${updateExtended}
         <div id="granularExtendedOptions">${updateExtendedHeader}${t}${x}${y}${rotation}${dim}${bright}${angle}${tintColor}${tintAlpha}${darknessThreshold}</div></div>`);
 
-        DancingLights.displayExtendedOptions(lightConfig.object.data.flags.world.dancingLights.enabled || false, "dancingLightsOptions");
-        DancingLights.displayExtendedOptions(lightConfig.object.data.flags.world.dancingLights.blurEnabled || false, "blurOptions");
-        DancingLights.displayExtendedOptions(lightConfig.object.data.flags.world.dancingLights.type && lightConfig.object.data.flags.world.dancingLights.type !== 'none', 'typeOptions');
-        DancingLights.displayExtendedOptions(lightConfig.object.data.flags.world.dancingLights.type == 'fire', 'fireOptions');
+        DancingLights.displayExtendedOptions(lightConfig.object.data.flags.DancingLights.enabled || false, "dancingLightsOptions");
+        DancingLights.displayExtendedOptions(lightConfig.object.data.flags.DancingLights.blurEnabled || false, "blurOptions");
+        DancingLights.displayExtendedOptions(lightConfig.object.data.flags.DancingLights.type && lightConfig.object.data.flags.DancingLights.type !== 'none', 'typeOptions');
+        DancingLights.displayExtendedOptions(lightConfig.object.data.flags.DancingLights.type == 'fire', 'fireOptions');
         DancingLights.displayExtendedOptions(false, 'updateExtendedOptions');
         DancingLights.displayExtendedOptions(false, 'granularExtendedOptions');
     }
@@ -340,13 +337,10 @@ class DancingLights {
 
     static createTimers() {
         canvas.lighting.objects.children.forEach((child) => {
-            if (!child.data.flags.world) {
-                child.data.flags.world = {};
+            if (!child.data.flags.DancingLights) {
+                child.data.flags.DancingLights = {};
             }
-            if (!child.data.flags.world.dancingLights) {
-                child.data.flags.world.dancingLights = {};
-            }
-            if (child.data.flags.world.dancingLights.enabled) {
+            if (child.data.flags.DancingLights.enabled) {
                 DancingLights.timers.push(setInterval(() => {
                     if (!DancingLights.brightPairs || DancingLights.brightPairs[child.id] == undefined) {
                         canvas.sight.light.bright.children.forEach((channelChild, index) => {
@@ -362,14 +356,14 @@ class DancingLights {
                             danceFrameCounter = 0;
                         }
                         try {
-                            canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].alpha = DancingLights.getAnimationFrame(child.id, child.data.flags.world.dancingLights.type, child.data.flags.world.dancingLights.speed || 1, child.data.flags.world.dancingLights.sync || false);
+                            canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].alpha = DancingLights.getAnimationFrame(child.id, child.data.flags.DancingLights.type, child.data.flags.DancingLights.speed || 1, child.data.flags.DancingLights.sync || false);
                             // Keeping in case we want to add this. Almost looks good.
                             // canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].filters[1].direction = Math.random() * 360;
                             // canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].filters[1].refresh();
-                            if (child.data.flags.world.dancingLights.type === 'fire') {
+                            if (child.data.flags.DancingLights.type === 'fire') {
                                 // Move the fire animation
-                                canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].light.transform.position.x = ((Math.random() - 0.5) * (child.id, child.data.flags.world.dancingLights.fireMovement || 15));
-                                canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].light.transform.position.y = ((Math.random() - 0.5) * (child.data.flags.world.dancingLights.fireMovement || 15));
+                                canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].light.transform.position.x = ((Math.random() - 0.5) * (child.id, child.data.flags.DancingLights.fireMovement || 15));
+                                canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].light.transform.position.y = ((Math.random() - 0.5) * (child.data.flags.DancingLights.fireMovement || 15));
                                 // Not ready to give up on skew/scale. Scale could be done by clearing and redrawing, but for now we'll stick with the position shift.
                                 // canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].light.transform.skew.x = ((Math.random() - 0.5) / 50);
                                 // canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].light.transform.skew.y = ((Math.random() - 0.5) / 50);
@@ -391,8 +385,8 @@ class DancingLights {
                 let dancingLightOptions;
                 let childID;
                 canvas.lighting.objects.children.forEach((child) => {
-                    if (child.x == s.x && child.y == s.y && child.data.flags.world) {
-                        dancingLightOptions = child.data.flags.world.dancingLights;
+                    if (child.x == s.x && child.y == s.y && child.data.flags.DancingLights) {
+                        dancingLightOptions = child.data.flags.DancingLights;
                         childID = child.id;
                     }
                 });
@@ -423,7 +417,7 @@ class DancingLights {
         const lights = scene.data.lights;
         lights.forEach((updateLight) => {
             if (updateLight._id !== lightId) {
-                mergeObject(updateLight.flags.world.dancingLights, light.flags.world.dancingLights, true, true)
+                mergeObject(updateLight.flags.DancingLights, light.flags.DancingLights, true, true)
                 if (updateExtended) {
                     let lightData = {};
                     updateGranular.t ? lightData.t = light.t : '';
@@ -450,11 +444,11 @@ class DancingLights {
 
     static onUpdateAmbientLight(scene, light, custom, changes, sceneID) {
 
-        if (light.flags.world && light.flags.world.dancingLights && light.flags.world.dancingLights.updateAll) {
-            light.flags.world.dancingLights.updateAll = false;
-            let updateExtended = light.flags.world.dancingLights.updateExtended;
-            let updateGranular = light.flags.world.dancingLights.updateGranular;
-            light.flags.world.dancingLights.updateExtended = false;
+        if (light.flags.DancingLights && light.flags.DancingLights.updateAll) {
+            light.flags.DancingLights.updateAll = false;
+            let updateExtended = light.flags.DancingLights.updateExtended;
+            let updateGranular = light.flags.DancingLights.updateGranular;
+            light.flags.DancingLights.updateExtended = false;
             (async () => {
                 console.time('lightPromise');
 
@@ -525,8 +519,8 @@ class DancingLights {
             let dancingLightOptions;
             let childID;
             canvas.lighting.objects.children.forEach((child) => {
-                if (hex === 0 && child.x == x && child.y == y && child.data.flags.world) {
-                    dancingLightOptions = child.data.flags.world.dancingLights;
+                if (hex === 0 && child.x == x && child.y == y && child.data.flags.DancingLights) {
+                    dancingLightOptions = child.data.flags.DancingLights;
                     childID = child.id;
                 }
             });
@@ -613,8 +607,8 @@ class DancingLights {
                 let dancingLightOptions;
                 let childID;
                 canvas.lighting.objects.children.forEach((child) => {
-                    if (child.x == s.x && child.y == s.y && child.data.flags.world) {
-                        dancingLightOptions = child.data.flags.world.dancingLights;
+                    if (child.x == s.x && child.y == s.y && child.data.flags.DancingLights) {
+                        dancingLightOptions = child.data.flags.DancingLights;
                         childID = child.id;
                     }
                 });
