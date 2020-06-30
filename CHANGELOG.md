@@ -1,3 +1,9 @@
+# 1.3.0 - 2020/06/30
+
+* Added the ability to optionally update lighting scene-wide with the lights 'standard' settings, as well as the DancingLight settings
+* Added the ability to determine which light settings you want to update scene-wide (Position is disabled by default, but can be enabled)
+* Overhauled light settings to make things more manageable
+
 # 1.2.1 - 2020/06/29
 
 * Minor settings text updates
