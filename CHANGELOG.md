@@ -1,3 +1,7 @@
+# 1.3.2 - 2020/07/01
+
+* Fix for Pathfinder 1e Darkvision in scenes with 'Darkness Level' set
+
 # 1.3.1 - 2020/06/30
 
 * Fixed settings display for new lights not rendering correctly

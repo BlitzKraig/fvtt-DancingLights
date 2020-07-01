@@ -409,6 +409,13 @@ class DancingLights {
                     }
                 }
             }
+            /* Fix for Pathfinder 1 'DarkVision' dimness in scenes with dark overlay set */
+            if(game.system.id === 'pf1') {
+                if (canvas.sight.hasDarkvision) {
+                    canvas.lighting.updateDarkvision();
+                }
+            }
+            /* PF1e fix end */
         }, danceTimerTick));
     }
 
@@ -631,6 +638,14 @@ class DancingLights {
                 }
                 /* Monkeypatch block end */
             }
+
+            /* Fix for Pathfinder 1 'DarkVision' dimness in scenes with dark overlay set */
+            if(game.system.id === 'pf1') {
+                if (canvas.sight.hasDarkvision) {
+                    canvas.lighting.updateDarkvision();
+                }
+            }
+            /* PF1e fix end */
         }
     }
 }
