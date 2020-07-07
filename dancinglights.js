@@ -212,15 +212,13 @@ class DancingLights {
         });
         let danceType = DancingLights.getFormElement("Dancing Lights Type", "Select 'none' to disable the animations (if you just want the blur for example)", "select", "type", lightConfig.object.data.flags.world.dancingLights.type || "none", "String", {
             values: ["fire", "blink", "fade", "electricfault", "none"],
-            onChange: `DancingLights.displayExtendedOptions(this.value !== "none", "typeOptions"); DancingLights.displayExtendedOptions(this.value == "fire", "fireOptions"); DancingLights.displayExtendedOptions(this.value == "blink" || this.value == "fade", "blinkFadeOptions");`
+            onChange: `DancingLights.displayExtendedOptions(this.value !== "none", "typeOptions"); DancingLights.displayExtendedOptions(this.value == "fire", "fireOptions"); DancingLights.displayExtendedOptions(this.value == "blink" || this.value == "fade", "blinkFadeOptions"); DancingLights.displayExtendedOptions(this.value == "blink", "blinkOptions");`
         });
         let sync = DancingLights.getFormElement("Enable Sync", "Synchronize animations. Lights with the same animation type & speed with this checked will animate together", "checkbox", "sync", lightConfig.object.data.flags.world.dancingLights.sync || false, "Boolean");
         let animateDim = DancingLights.getFormElement("Enable Dim Animation", "If checked, the 'dim' light will also fade based on a fraction of the bright light. This overrides the 'Light Opacity' in the default light settings. Disable this to keep the opacity as set.", "checkbox", "animateDimAlpha", lightConfig.object.data.flags.world.dancingLights.animateDimAlpha || false, "Boolean"); //animateDimAlpha
         let startColor = DancingLights.getFormElement("Fire Color Dim", "The light color when the fire is at its dimmest", "color", "startColor", lightConfig.object.data.flags.world.dancingLights.startColor || "#ffc08f", "String");
         let endColor = DancingLights.getFormElement("Fire Color Bright", "The light color when the fire is at its brightest", "color", "endColor", lightConfig.object.data.flags.world.dancingLights.endColor || "#f8e0af", "String");
-        // let blinkFadeColorEnabled = DancingLights.getFormElement("Enable Blink/Fade Colors", "", "checkbox", "blinkFadeColorEnabled", lightConfig.object.data.flags.world.dancingLights.blinkFadeColorEnabled || false, "Boolean", {
-        //     onClick: 'DancingLights.displayExtendedOptions(this.checked, "blinkFadeColorOptions");'
-        // });
+        let blinkColorOnly = DancingLights.getFormElement("Blink Color Only", "Do not change the alpha of the Blink light, only switch between colors. Useful for 'disco lights'", "checkbox", "blinkColorOnly", lightConfig.object.data.flags.world.dancingLights.blinkColorOnly || false, "Boolean");
         let blinkFadeColorEnabled = DancingLights.getFormElement("Enable Blink/Fade Colors", "'none' uses to normal Light Opacity, other values animate between colors", "select", "blinkFadeColorEnabled", lightConfig.object.data.flags.world.dancingLights.blinkFadeColorEnabled || "none", "String", {
             values: ["none", "two", "three"],
             onChange: `DancingLights.displayExtendedOptions(this.value !== "none", "blinkFadeColorOptions"); DancingLights.displayExtendedOptions(this.value == "three", "blinkFadeColorOptionsExtended");`
@@ -259,6 +257,7 @@ class DancingLights {
 
         $('button[name ="submit"]').before(`${dancingLightsHeader}${dancingLightsEnabled}<div id="dancingLightsOptions">${blurEnabled}
         <div id="blurOptions">${blurAmount}</div>${danceType}<div id="typeOptions"><div id="fireOptions">${startColor}${endColor}${movementAmount}</div>
+        <div id="blinkOptions">${blinkColorOnly}</div>
         <div id="blinkFadeOptions">${blinkFadeColorEnabled}<div id="blinkFadeColorOptions">${blinkFadeColor1}${blinkFadeColor2}<div id="blinkFadeColorOptionsExtended">${blinkFadeColor3}</div></div></div>
         ${sync}${animateDim}${speed}</div></div>${updateAll}<div id="updateExtendedOptions">${updateExtended}
         <div id="granularExtendedOptions">${updateExtendedHeader}${t}${x}${y}${rotation}${dim}${bright}${angle}${tintColor}${tintAlpha}${darknessThreshold}</div></div>`);
@@ -267,6 +266,7 @@ class DancingLights {
         DancingLights.displayExtendedOptions(lightConfig.object.data.flags.world.dancingLights.blurEnabled || false, "blurOptions");
         DancingLights.displayExtendedOptions(lightConfig.object.data.flags.world.dancingLights.type && lightConfig.object.data.flags.world.dancingLights.type !== 'none', 'typeOptions');
         DancingLights.displayExtendedOptions(lightConfig.object.data.flags.world.dancingLights.type == 'fire', 'fireOptions');
+        DancingLights.displayExtendedOptions(lightConfig.object.data.flags.world.dancingLights.type == 'blink', "blinkOptions");
         DancingLights.displayExtendedOptions(lightConfig.object.data.flags.world.dancingLights.type == 'blink' || lightConfig.object.data.flags.world.dancingLights.type == 'fade', "blinkFadeOptions");
         DancingLights.displayExtendedOptions(lightConfig.object.data.flags.world.dancingLights.blinkFadeColorEnabled && lightConfig.object.data.flags.world.dancingLights.blinkFadeColorEnabled !== 'none', "blinkFadeColorOptions");
         DancingLights.displayExtendedOptions(lightConfig.object.data.flags.world.dancingLights.blinkFadeColorEnabled && lightConfig.object.data.flags.world.dancingLights.blinkFadeColorEnabled == 'three', "blinkFadeColorOptionsExtended");
@@ -281,9 +281,10 @@ class DancingLights {
         DancingLights.timers.forEach(timer => {
             clearInterval(timer);
         });
+        DancingLights.timers = [];
     }
 
-    static getAnimationFrame(id, type, speed, sync) {
+    static getAnimationFrame(id, type, speed, sync, opt) {
         if (!DancingLights.animationFrame[id]) {
             DancingLights.animationFrame[id] = {
                 frame: 0,
@@ -313,17 +314,27 @@ class DancingLights {
                 if (!DancingLights.animationFrame[id].alreadyPlaying) {
                     if (!sync) {
                         DancingLights.animationFrame[id].frame = Math.round(Math.random() * 2);
+                        DancingLights.animationFrame[id].blinkColorIndex = Math.round(Math.random() * 2);
                     }
                     DancingLights.animationFrame[id].alreadyPlaying = true;
                 }
+                
                 DancingLights.animationFrame[id].timesShown++;
 
                 if (DancingLights.animationFrame[id].timesShown >= speed) {
                     DancingLights.animationFrame[id].timesShown = 0;
                     DancingLights.animationFrame[id].frame++;
+                    if(DancingLights.animationFrame[id].blinkColorIndex == undefined){
+                        DancingLights.animationFrame[id].blinkColorIndex = 0;
+                    } else {
+                        DancingLights.animationFrame[id].blinkColorIndex++;
+                    }
                 }
                 if (DancingLights.animationFrame[id].frame >= 2) {
                     DancingLights.animationFrame[id].frame = 0;
+                }
+                if(opt.blinkColorOnly){
+                    return 1
                 }
                 return DancingLights.animationFrame[id].frame;
             case 'fade':
@@ -357,6 +368,21 @@ class DancingLights {
                 return 1;
         }
 
+
+    }
+
+    static getBlinkColor(id, colorsArray) {
+        if(!DancingLights.animationFrame[id]){
+            return;
+        }
+        if(DancingLights.animationFrame[id].blinkColorIndex == undefined || DancingLights.animationFrame[id].blinkColorIndex >= colorsArray.length){
+            DancingLights.animationFrame[id].blinkColorIndex = 0
+            
+        }
+        if(!canvas.sight.visible){
+            return;
+        }
+        return chroma(colorsArray[DancingLights.animationFrame[id].blinkColorIndex]).num();
 
     }
 
@@ -394,7 +420,7 @@ class DancingLights {
                             danceFrameCounter = 0;
                         }
                         try {
-                            canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].alpha = DancingLights.getAnimationFrame(child.id, child.data.flags.world.dancingLights.type, child.data.flags.world.dancingLights.speed || 1, child.data.flags.world.dancingLights.sync || false);
+                            canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].alpha = DancingLights.getAnimationFrame(child.id, child.data.flags.world.dancingLights.type, child.data.flags.world.dancingLights.speed || 1, child.data.flags.world.dancingLights.sync || false, {blinkColorOnly:child.data.flags.world.dancingLights.blinkColorOnly});
                             // Keeping in case we want to add this. Almost looks good.
                             // canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].filters[1].direction = Math.random() * 360;
                             // canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].filters[1].refresh();
@@ -438,6 +464,12 @@ class DancingLights {
                                 canvas.lighting.lighting.lights.beginFill(DancingLights.getFadeColor(childID, [dancingLightOptions.blinkFadeColor1 || '#ff0000', dancingLightOptions.blinkFadeColor2 || '#00ff00']), dancingLightOptions.animateDimAlpha ? 1 - (1 - (DancingLights.lastAlpha[childID])) / 2 || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
                             } else if (dancingLightOptions.blinkFadeColorEnabled == 'three') {
                                 canvas.lighting.lighting.lights.beginFill(DancingLights.getFadeColor(childID, [dancingLightOptions.blinkFadeColor1 || '#ff0000', dancingLightOptions.blinkFadeColor2 || '#00ff00', dancingLightOptions.blinkFadeColor3 || '#0000ff']), dancingLightOptions.animateDimAlpha ? 1 - (1 - (DancingLights.lastAlpha[childID])) / 2 || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
+                            }
+                        } else if (dancingLightOptions.type === 'blink' && dancingLightOptions.blinkFadeColorEnabled !== 'none') {
+                            if (dancingLightOptions.blinkFadeColorEnabled == 'two') {
+                                canvas.lighting.lighting.lights.beginFill(DancingLights.getBlinkColor(childID, [dancingLightOptions.blinkFadeColor1 || '#ff0000', dancingLightOptions.blinkFadeColor2 || '#00ff00']) || s.color, dancingLightOptions.animateDimAlpha ? 1 - (1 - (DancingLights.lastAlpha[childID])) / 2 || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
+                            } else if (dancingLightOptions.blinkFadeColorEnabled == 'three') {
+                                canvas.lighting.lighting.lights.beginFill(DancingLights.getBlinkColor(childID, [dancingLightOptions.blinkFadeColor1 || '#ff0000', dancingLightOptions.blinkFadeColor2 || '#00ff00', dancingLightOptions.blinkFadeColor3 || '#0000ff']) || s.color, dancingLightOptions.animateDimAlpha ? 1 - (1 - (DancingLights.lastAlpha[childID])) / 2 || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
                             }
                         } else {
                             canvas.lighting.lighting.lights.beginFill(s.color, dancingLightOptions.animateDimAlpha ? 1 - (1 - DancingLights.lastAlpha[childID]) / 2 || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
@@ -677,6 +709,12 @@ class DancingLights {
                                 canvas.lighting.lighting.lights.beginFill(DancingLights.getFadeColor(childID, [dancingLightOptions.blinkFadeColor1 || '#ff0000', dancingLightOptions.blinkFadeColor2 || '#00ff00']), dancingLightOptions.animateDimAlpha ? 1 - (1 - (DancingLights.lastAlpha[childID])) / 2 || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
                             } else if (dancingLightOptions.blinkFadeColorEnabled == 'three') {
                                 canvas.lighting.lighting.lights.beginFill(DancingLights.getFadeColor(childID, [dancingLightOptions.blinkFadeColor1 || '#ff0000', dancingLightOptions.blinkFadeColor2 || '#00ff00', dancingLightOptions.blinkFadeColor3 || '#0000ff']), dancingLightOptions.animateDimAlpha ? 1 - (1 - (DancingLights.lastAlpha[childID])) / 2 || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
+                            }
+                        } else if (dancingLightOptions.type === 'blink' && dancingLightOptions.blinkFadeColorEnabled !== 'none') {
+                            if (dancingLightOptions.blinkFadeColorEnabled == 'two') {
+                                canvas.lighting.lighting.lights.beginFill(DancingLights.getBlinkColor(childID, [dancingLightOptions.blinkFadeColor1 || '#ff0000', dancingLightOptions.blinkFadeColor2 || '#00ff00']), dancingLightOptions.animateDimAlpha ? 1 - (1 - (DancingLights.lastAlpha[childID])) / 2 || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
+                            } else if (dancingLightOptions.blinkFadeColorEnabled == 'three') {
+                                canvas.lighting.lighting.lights.beginFill(DancingLights.getBlinkColor(childID, [dancingLightOptions.blinkFadeColor1 || '#ff0000', dancingLightOptions.blinkFadeColor2 || '#00ff00', dancingLightOptions.blinkFadeColor3 || '#0000ff']), dancingLightOptions.animateDimAlpha ? 1 - (1 - (DancingLights.lastAlpha[childID])) / 2 || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
                             }
                         } else {
                             canvas.lighting.lighting.lights.beginFill(s.color, dancingLightOptions.animateDimAlpha ? 1 - (1 - DancingLights.lastAlpha[childID]) / 2 || s.alpha : s.alpha).drawPolygon(s.fov).endFill();

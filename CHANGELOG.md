@@ -1,3 +1,12 @@
+# 1.4.0 - 2020/07/07
+
+* Added blinking/fading color changes
+* Greatly improved Fading speed animations. Now smooth on slower speeds
+* Added option to have a blinking colored light with no alpha changes ('disco' light)
+* Important performance increase - Ensured a working array is cleared when it should be
+* Added versioned releases (Thanks to Stan#1549 on Discord for the guide)
+* GIFs are now no longer in the release package, so releases should be far smaller
+
 # 1.3.2 - 2020/07/01
 
 * Fix for Pathfinder 1e Darkvision in scenes with 'Darkness Level' set
