@@ -11,10 +11,6 @@ jobs:
       shell: bash
       id: get-version
       run: echo "::set-output name=version::$(node ./.github/workflows/get-version.js)"
-    - name: Set Manifest Version
-      shell: bash
-      id: set-manifest-version
-      run: "node ./.github/workflows/set-version.js"
     - run: zip -r ./dancinglights-release.zip module.json dancinglights.js dependencies/
     - name: Create Release
       id: create_versioned_release
@@ -27,4 +23,4 @@ jobs:
         prerelease: false
         token: ${{ secrets.GITHUB_TOKEN }}
         artifacts: './module.json,./dancinglights-release.zip'
-        tag: ${{ steps.get-version.outputs.version }}
+        tag: latest
