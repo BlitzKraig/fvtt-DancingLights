@@ -15,6 +15,7 @@ jobs:
     - name: Create Release
       id: create_versioned_release
       uses: ncipollo/release-action@v1
+      if: endsWith(github.ref, 'master')
       with:
         allowUpdates: true
         name: Release ${{ steps.get-version.outputs.version }}
