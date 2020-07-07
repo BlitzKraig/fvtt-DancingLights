@@ -1,3 +1,7 @@
+# 1.4.x - 2020/07/07
+
+* Various build workflow tweaks. If you are having issues, please uninstall & reinstall the module
+
 # 1.4.0 - 2020/07/07
 
 * Added blinking/fading color changes

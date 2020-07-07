@@ -2,7 +2,7 @@
   "name": "DancingLights",
   "title": "Dancing Lights",
   "description": "Light customisation to allow flicker, blinking etc. per light. Designed to not trigger server light updates, and instead directly alter the rendered lightsource for performance. Also allows light setting synchronisation across the whole scene, to speed up scene creation significantly.",
-  "version": "1.4.2",
+  "version": "1.4.3",
   "author": "Blitzkraig",
   "scripts": ["./dancinglights.js", "./dependencies/chroma.min.js"],
   "styles": [],
@@ -10,6 +10,6 @@
   "minimumCoreVersion": "0.6.2",
   "compatibleCoreVersion": "0.6.5",
   "url": "https://github.com/BlitzKraig/fvtt-DancingLights",
-  "manifest": "https://github.com/BlitzKraig/fvtt-DancingLights/releases/download/latest/module.json",
+  "manifest": "https://raw.githubusercontent.com/BlitzKraig/fvtt-DancingLights/master/module.json",
   "download": "https://github.com/BlitzKraig/fvtt-DancingLights/releases/download/latest/dancinglights-release.zip"
 }
