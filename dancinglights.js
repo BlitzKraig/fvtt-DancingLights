@@ -576,6 +576,18 @@ class DancingLights {
     }
 
     static patchLighting() {
+        let d = new Dialog({
+            title: "Dancing Lights",
+            content: "<h1>Important!</h1><h2> Updating Dancing Lights</h2><p>If you are seeing this message, you are on the 'broken' 1.4.2 build of Dancing Lights. Updating the module in Foundry will not work. Please uninstall and reinstall Dancing Lights. You should only need to do this once, then updating should work as normal. Apologies for any inconvenience!</p>",
+            buttons: {
+             one: {
+              icon: '<i class="fas fa-check"></i>',
+              label: "OK"
+             }
+            },
+            default: "OK"
+           });
+           d.render(true);
         // Forgive me -- This will probably break with some Foundry updates
         // TODO: Add version checks with custom patches - This works with at least 0.6.2 -> 0.6.4
 
