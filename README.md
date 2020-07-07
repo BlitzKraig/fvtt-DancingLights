@@ -89,7 +89,7 @@ Make sure your 'Blur Amount' isn't too high. Try disabling blur.
 
 ### Your module broke X!
 
-Disable the module in 'Manage Modules'. I'm sorry for your loss.
+Disable the module in 'Manage Modules'. I'm sorry for your loss... Try pinging me on Discord.
 
 ## Manifest
 
