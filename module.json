@@ -10,6 +10,6 @@
   "minimumCoreVersion": "0.6.2",
   "compatibleCoreVersion": "0.6.5",
   "url": "https://github.com/BlitzKraig/fvtt-DancingLights",
-  "manifest": "https://github.com/BlitzKraig/fvtt-DancingLights/releases/download/latest/module.json",
-  "download": "https://github.com/BlitzKraig/fvtt-DancingLights/releases/download/latest/dancinglights-release.zip"
+  "manifest": "https://github.com/BlitzKraig/fvtt-DancingLights/releases/download/1.4.0/module.json",
+  "download": "https://github.com/BlitzKraig/fvtt-DancingLights/releases/download/1.4.0/dancinglights-release.zip"
 }
