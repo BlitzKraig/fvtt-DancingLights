@@ -1,7 +1,7 @@
 # Dancing Lights
 
 ![DancingLights Release](https://github.com/BlitzKraig/fvtt-DancingLights/workflows/DancingLights%20Release/badge.svg)
-![Latest Release Download Count](https://img.shields.io/github/downloads-pre/BlitzKraig/fvtt-DancingLights/latest/dancinglights-release.zip)
+![Latest Release Download Count](https://img.shields.io/github/downloads-pre/BlitzKraig/fvtt-DancingLights/1.4.0/dancinglights-release.zip)
 
 Better ambient lighting for Foundry VTT.
 Designed to avoid server-side light updates by directly modifying the lights PIXI elements client-side.
