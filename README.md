@@ -3,6 +3,8 @@
 ![DancingLights Release](https://github.com/BlitzKraig/fvtt-DancingLights/workflows/DancingLights%20Release/badge.svg)
 ![Latest Release Download Count](https://img.shields.io/github/downloads-pre/BlitzKraig/fvtt-DancingLights/latest/dancinglights-release.zip)
 
+<a href="https://www.buymeacoffee.com/Blitzkraig" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/lato-orange.png" alt="Buy Me A Coffee" height=30></a>
+
 Better ambient lighting for Foundry VTT.
 Designed to avoid server-side light updates by directly modifying the lights PIXI elements client-side.
 
@@ -86,6 +88,10 @@ Disable the 'Dim token Bright Vision' option in module settings, or set the slid
 ### My lights are dim in the centre, or I can't see the bright light
 
 Make sure your 'Blur Amount' isn't too high. Try disabling blur.
+
+### One of my players is playing on a toaster
+
+You can have them disable Dancing Lights or change the update speed in their module settings. This won't affect any other players.
 
 ### Your module broke X!
 

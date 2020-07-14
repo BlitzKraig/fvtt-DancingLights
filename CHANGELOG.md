@@ -1,3 +1,10 @@
+# 1.5.0 - 2020/07/14
+
+* Huge performance gains - Please contact me if you are still experiencing poor performance on a decent machine, or a simple scene
+* Fixed a bug where adding or removing token selection interfered with lighting, causing some lights to not animate, or tokens to begin animating
+* Added option to disabled DancingLights per client
+* Added option to change DancingLights tickrate to help performance per client
+
 # 1.4.x - 2020/07/07
 
 * Various build workflow tweaks. If you are having issues, please uninstall & reinstall the module

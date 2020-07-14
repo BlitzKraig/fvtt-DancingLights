@@ -1,24 +1,24 @@
-const danceTimerTick = 80;
+var danceTimerTick = 80;
 var danceFrameCounter = 0;
 //TODO: Improve class structure...
 class DancingLights {
 
     static Utilities = {
-        arraysEqual : (arr1, arr2) => {
-            if(arr1.length !== arr2.length)
+        arraysEqual: (arr1, arr2) => {
+            if (arr1.length !== arr2.length)
                 return false;
-            for(var i = arr1.length; i--;) {
-                if(arr1[i] !== arr2[i])
+            for (var i = arr1.length; i--;) {
+                if (arr1[i] !== arr2[i])
                     return false;
             }
-        
+
             return true;
         }
     }
 
     static brightPairs = {};
     static lastAlpha = {};
-    static timers = [];
+    static timer;
 
     static animationFrame = {};
 
@@ -278,10 +278,10 @@ class DancingLights {
     static destroyAllTimers() {
         DancingLights.animationFrame = {};
         DancingLights.brightPairs = {};
-        DancingLights.timers.forEach(timer => {
-            clearInterval(timer);
-        });
-        DancingLights.timers = [];
+        if (DancingLights.timer) {
+            clearInterval(DancingLights.timer);
+            DancingLights.timer = undefined;
+        }
     }
 
     static getAnimationFrame(id, type, speed, sync, opt) {
@@ -318,13 +318,13 @@ class DancingLights {
                     }
                     DancingLights.animationFrame[id].alreadyPlaying = true;
                 }
-                
+
                 DancingLights.animationFrame[id].timesShown++;
 
                 if (DancingLights.animationFrame[id].timesShown >= speed) {
                     DancingLights.animationFrame[id].timesShown = 0;
                     DancingLights.animationFrame[id].frame++;
-                    if(DancingLights.animationFrame[id].blinkColorIndex == undefined){
+                    if (DancingLights.animationFrame[id].blinkColorIndex == undefined) {
                         DancingLights.animationFrame[id].blinkColorIndex = 0;
                     } else {
                         DancingLights.animationFrame[id].blinkColorIndex++;
@@ -333,7 +333,7 @@ class DancingLights {
                 if (DancingLights.animationFrame[id].frame >= 2) {
                     DancingLights.animationFrame[id].frame = 0;
                 }
-                if(opt.blinkColorOnly){
+                if (opt.blinkColorOnly) {
                     return 1
                 }
                 return DancingLights.animationFrame[id].frame;
@@ -348,7 +348,7 @@ class DancingLights {
 
                 // if (DancingLights.animationFrame[id].timesShown >= speed) {
                 //     DancingLights.animationFrame[id].timesShown = 0;
-                    DancingLights.animationFrame[id].frame++;
+                DancingLights.animationFrame[id].frame++;
                 // }
                 if (DancingLights.animationFrame[id].frame >= (20 * speed)) {
                     DancingLights.animationFrame[id].frame = 0;
@@ -372,14 +372,14 @@ class DancingLights {
     }
 
     static getBlinkColor(id, colorsArray) {
-        if(!DancingLights.animationFrame[id]){
+        if (!DancingLights.animationFrame[id]) {
             return;
         }
-        if(DancingLights.animationFrame[id].blinkColorIndex == undefined || DancingLights.animationFrame[id].blinkColorIndex >= colorsArray.length){
+        if (DancingLights.animationFrame[id].blinkColorIndex == undefined || DancingLights.animationFrame[id].blinkColorIndex >= colorsArray.length) {
             DancingLights.animationFrame[id].blinkColorIndex = 0
-            
+
         }
-        if(!canvas.sight.visible){
+        if (!canvas.sight.visible) {
             return;
         }
         return chroma(colorsArray[DancingLights.animationFrame[id].blinkColorIndex]).num();
@@ -397,51 +397,9 @@ class DancingLights {
     }
 
     static createTimers() {
-        canvas.lighting.objects.children.forEach((child) => {
-            if (!child.data.flags.world) {
-                child.data.flags.world = {};
-            }
-            if (!child.data.flags.world.dancingLights) {
-                child.data.flags.world.dancingLights = {};
-            }
-            if (child.data.flags.world.dancingLights.enabled) {
-                DancingLights.timers.push(setInterval(() => {
-                    if (!DancingLights.brightPairs || DancingLights.brightPairs[child.id] == undefined) {
-                        canvas.sight.light.bright.children.forEach((channelChild, index) => {
-                            if (channelChild.light.geometry.graphicsData[0].shape.x === child.x && channelChild.light.geometry.graphicsData[0].shape.y === child.y) {
-                                DancingLights.brightPairs[child.id] = index;
-                            }
-                            if (!DancingLights.brightPairs[child.id] && game.settings.get("DancingLights", "dimBrightVision")) {
-                                channelChild.alpha = game.settings.get("DancingLights", "dimBrightVisionAmount") || 0.5;
-                            }
-                        });
-                    } else {
-                        if (danceFrameCounter++ >= 1000) {
-                            danceFrameCounter = 0;
-                        }
-                        try {
-                            canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].alpha = DancingLights.getAnimationFrame(child.id, child.data.flags.world.dancingLights.type, child.data.flags.world.dancingLights.speed || 1, child.data.flags.world.dancingLights.sync || false, {blinkColorOnly:child.data.flags.world.dancingLights.blinkColorOnly});
-                            // Keeping in case we want to add this. Almost looks good.
-                            // canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].filters[1].direction = Math.random() * 360;
-                            // canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].filters[1].refresh();
-                            if (child.data.flags.world.dancingLights.type === 'fire') {
-                                // Move the fire animation
-                                canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].light.transform.position.x = ((Math.random() - 0.5) * (child.id, child.data.flags.world.dancingLights.fireMovement || 15));
-                                canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].light.transform.position.y = ((Math.random() - 0.5) * (child.data.flags.world.dancingLights.fireMovement || 15));
-                                // Not ready to give up on skew/scale. Scale could be done by clearing and redrawing, but for now we'll stick with the position shift.
-                                // canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].light.transform.skew.x = ((Math.random() - 0.5) / 50);
-                                // canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].light.transform.skew.y = ((Math.random() - 0.5) / 50);
-                            }
-                            DancingLights.lastAlpha[child.id] = canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].alpha;
-                        } catch (e) {
-                            // Sight layer isn't active, ignore
-                        }
-                    }
-                }, danceTimerTick));
-            }
-        });
-        // Global timer
-        DancingLights.timers.push(setInterval(() => {
+        danceTimerTick = game.settings.get("DancingLights", "clientSpeed") || 80
+        DancingLights.timer = setInterval(() => {
+            let runAlready = false;
             try {
                 canvas.lighting.lighting.lights.clear();
             } catch (e) {}
@@ -449,11 +407,55 @@ class DancingLights {
                 let dancingLightOptions;
                 let childID;
                 canvas.lighting.objects.children.forEach((child) => {
+                    if (!runAlready) {
+                        if (!child.data.flags.world) {
+                            child.data.flags.world = {};
+                        }
+                        if (!child.data.flags.world.dancingLights) {
+                            child.data.flags.world.dancingLights = {};
+                        }
+                        if (child.data.flags.world.dancingLights.enabled) {
+                            if (!DancingLights.brightPairs || DancingLights.brightPairs[child.id] == undefined) {
+                                canvas.sight.light.bright.children.forEach((channelChild, index) => {
+                                    if (channelChild.light.geometry.graphicsData[0].shape.x === child.x && channelChild.light.geometry.graphicsData[0].shape.y === child.y) {
+                                        DancingLights.brightPairs[child.id] = index;
+                                    }
+                                    if (!DancingLights.brightPairs[child.id] && game.settings.get("DancingLights", "dimBrightVision")) {
+                                        channelChild.alpha = game.settings.get("DancingLights", "dimBrightVisionAmount") || 0.5;
+                                    }
+                                });
+                            } else {
+                                if (danceFrameCounter++ >= 1000) {
+                                    danceFrameCounter = 0;
+                                }
+                                try {
+                                    canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].alpha = DancingLights.getAnimationFrame(child.id, child.data.flags.world.dancingLights.type, child.data.flags.world.dancingLights.speed || 1, child.data.flags.world.dancingLights.sync || false, {
+                                        blinkColorOnly: child.data.flags.world.dancingLights.blinkColorOnly
+                                    });
+                                    // Keeping in case we want to add this. Almost looks good.
+                                    // canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].filters[1].direction = Math.random() * 360;
+                                    // canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].filters[1].refresh();
+                                    if (child.data.flags.world.dancingLights.type === 'fire') {
+                                        // Move the fire animation
+                                        canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].light.transform.position.x = ((Math.random() - 0.5) * (child.id, child.data.flags.world.dancingLights.fireMovement || 15));
+                                        canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].light.transform.position.y = ((Math.random() - 0.5) * (child.data.flags.world.dancingLights.fireMovement || 15));
+                                        // Not ready to give up on skew/scale. Scale could be done by clearing and redrawing, but for now we'll stick with the position shift.
+                                        // canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].light.transform.skew.x = ((Math.random() - 0.5) / 50);
+                                        // canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].light.transform.skew.y = ((Math.random() - 0.5) / 50);
+                                    }
+                                    DancingLights.lastAlpha[child.id] = canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].alpha;
+                                } catch (e) {
+                                    // Sight layer isn't active, ignore
+                                }
+                            }
+                        }
+                    }
                     if (child.x == s.x && child.y == s.y && child.data.flags.world) {
                         dancingLightOptions = child.data.flags.world.dancingLights;
                         childID = child.id;
                     }
                 });
+                runAlready = true;
 
                 if (s.darknessThreshold <= canvas.lighting._darkness) {
                     if (dancingLightOptions && dancingLightOptions.enabled) {
@@ -480,13 +482,13 @@ class DancingLights {
                 }
             }
             /* Fix for Pathfinder 1 'DarkVision' dimness in scenes with dark overlay set */
-            if(game.system.id === 'pf1') {
+            if (game.system.id === 'pf1') {
                 if (canvas.sight.hasDarkvision) {
                     canvas.lighting.updateDarkvision();
                 }
             }
             /* PF1e fix end */
-        }, danceTimerTick));
+        }, danceTimerTick);
     }
 
     static forceReinit() {
@@ -546,6 +548,17 @@ class DancingLights {
     }
 
     static onInit() {
+        game.settings.register("DancingLights", "enabledForClient", {
+            name: "Enable Dancing Lights (Per client)",
+            hint: "My PC can handle it! If a player is having trouble with dancing lights, but you don't want everyone else to miss out, ask them to disable this checkbox",
+            scope: "client",
+            config: true,
+            default: true,
+            type: Boolean,
+            onChange: value => {
+                window.location.reload();
+            }
+        })
         game.settings.register("DancingLights", "dimBrightVision", {
             name: "Dim token Bright Vision",
             hint: "Changing this will refresh your page! Disable this to revert bright vision circles back to default. Note that you will not see some Dancing Lights effects properly while they are within your bright vision radius.",
@@ -573,6 +586,33 @@ class DancingLights {
                 window.location.reload();
             }
         })
+        game.settings.register("DancingLights", "clientSpeed", {
+            name: "Client Interval",
+            hint: "Change the tickrate of DancingLights, in ms. Lower is faster, and more resource intensive. The module was designed with an interval of 80 in mind, but you can try increasing this a little if a player is having performance issues. Note that their animations will run slower as a result. ~100ms should still be relatively smooth, while reducing CPU load.",
+            scope: "client",
+            config: true,
+            type: Number,
+            range: { // If range is specified, the resulting setting will be a range slider
+                min: 10,
+                max: 400,
+                step: 1
+            },
+            default: 80,
+            onChange: value => {
+                canvas.draw();
+                // window.location.reload();
+            }
+        })
+
+        if (game.settings.get("DancingLights", "enabledForClient")) {
+            Hooks.on("renderLightConfig", DancingLights.onRenderLightConfig);
+            Hooks.on("updateAmbientLight", DancingLights.onUpdateAmbientLight);
+            Hooks.on("createAmbientLight", DancingLights.forceReinit);
+            Hooks.on("closeTokenConfig", DancingLights.forceReinit);
+            Hooks.on("controlToken", DancingLights.forceReinit);
+            Hooks.once("canvasReady", DancingLights.patchLighting);
+            Hooks.on("canvasReady", DancingLights.forceReinit);
+        }
     }
 
     static patchLighting() {
@@ -602,10 +642,10 @@ class DancingLights {
             let dancingLightOptions;
             let childID;
             canvas.lighting.objects.children.forEach((child) => {
-                if (hex === 0 && 
-                    child.data.flags.world && 
+                if (hex === 0 &&
+                    child.data.flags.world &&
                     child.x == x && // Strangely, token brightlights can match the lights easily on refresh, as snapped tokens & lights are whole num floats, but once tokens are moved they add decimals
-                    child.y == y && 
+                    child.y == y &&
                     child.brightRadius == radius && // Check the radius and fovs to try prevent grabbing a token brightlight on scene refresh.
                     DancingLights.Utilities.arraysEqual(child.fov.points, fov.points)) {
                     dancingLightOptions = child.data.flags.world.dancingLights;
@@ -727,7 +767,7 @@ class DancingLights {
             }
 
             /* Fix for Pathfinder 1 'DarkVision' dimness in scenes with dark overlay set */
-            if(game.system.id === 'pf1') {
+            if (game.system.id === 'pf1') {
                 if (canvas.sight.hasDarkvision) {
                     canvas.lighting.updateDarkvision();
                 }
@@ -736,10 +776,5 @@ class DancingLights {
         }
     }
 }
-Hooks.on("renderLightConfig", DancingLights.onRenderLightConfig);
-Hooks.on("updateAmbientLight", DancingLights.onUpdateAmbientLight);
-Hooks.on("createAmbientLight", DancingLights.forceReinit);
-Hooks.on("closeTokenConfig", DancingLights.forceReinit);
-Hooks.once("canvasReady", DancingLights.patchLighting);
+
 Hooks.on("init", DancingLights.onInit);
-Hooks.on("canvasReady", DancingLights.forceReinit);
