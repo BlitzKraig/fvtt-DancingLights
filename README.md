@@ -1,7 +1,7 @@
 # Dancing Lights
 
 ![DancingLights Release](https://github.com/BlitzKraig/fvtt-DancingLights/workflows/DancingLights%20Release/badge.svg)
-![Latest Release Download Count](https://img.shields.io/github/downloads-pre/BlitzKraig/fvtt-DancingLights/latest/dancinglights-release.zip)
+![Latest Release Download Count](https://img.shields.io/github/downloads/BlitzKraig/fvtt-DancingLights/latest/dancinglights-release.zip)
 
 <a href="https://www.buymeacoffee.com/Blitzkraig" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/lato-orange.png" alt="Buy Me A Coffee" height=30></a>
 
