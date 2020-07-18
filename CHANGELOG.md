@@ -1,3 +1,7 @@
+# 1.5.1 - 2020/07/18
+
+* Bugfix - Blur is now applied when players with token vision on a scene refresh or load the page, no longer requiring a canvas redraw.
+
 # 1.5.0 - 2020/07/14
 
 * Huge performance gains - Please contact me if you are still experiencing poor performance on a decent machine, or a simple scene

@@ -774,6 +774,10 @@ class DancingLights {
             }
             /* PF1e fix end */
         }
+        
+        // Force refreshed players with token vision to apply blur
+        canvas.sight.update();
+        
     }
 }
 
