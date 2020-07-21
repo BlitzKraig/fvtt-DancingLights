@@ -1,3 +1,30 @@
+# 2.0.0 - 2020/07/20
+
+## New features
+
+* Added token based lighting. Make sure you have an Emit Bright distance set on the token, and enable dancing lights in the vision tab.
+* Improved fire effects - Semi-breaking change! Any current fire lights will use the new system. If you need to go back to the old system, switch these lights to use 'legacyfire' - Note that this will be removed in the future
+    * The new Fire system is procedural, and you should be able to alter the speed without causing choppiness. 
+* Added ability to set min/max fade
+
+## Misc Changes
+
+* Changed Dim Bright Vision settings to be per-client
+* Tweaked dim/color animation option. This will now fade completely in-step with the bright light fade, allowing blinking/fading lights to 'turn off' when their opacity is at its lowest
+* Tweaked default light settings for fire movement & color
+* Refactored code for easier future maintenance & updates
+* Added light source tagging system, which should bring improvements across the board
+* Improved animation smoothness for all types
+
+## Performance improvements
+* Object for tracking the last alpha is now cleared regularly
+* Massively reduced loop count with the tagging system
+
+## Bugfixes
+* Negative-radius lights no longer cause all dancing lights to fail
+* Lights with opacity 0 no longer revert to the default opacity (Seen as a quick flash of color when using a 'fade' light with dim/color animation enabled - This is a Foundry bug, and can be seen without DancingLights installed)
+* Light tagging system should mean no more guesstimating which light source to affect, fixing bugs where the wrong source was animated
+
 # 1.5.1 - 2020/07/18
 
 * Bugfix - Blur is now applied when players with token vision on a scene refresh or load the page, no longer requiring a canvas redraw.
