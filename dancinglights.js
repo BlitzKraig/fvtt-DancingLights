@@ -480,15 +480,13 @@ class DancingLights {
             c.clear();
         } catch (e) {}
         if (canvas.sight.light.bright.children.length > 0) {
-            DancingLights.drawLighting();
+            DancingLights.drawLighting(true);
         }
     };
 
-    static drawLighting() {
+    static drawLighting(advanceFrame) {
         for (let k of canvas.sight.sources.lights.keys()) {
             let s = canvas.sight.sources.lights.get(k);
-            let dancingLightOptions;
-            let childID;
 
             let childLight = canvas.lighting.get(k.split('.')[1]) || canvas.tokens.get(k.split('.')[1]);
 
@@ -504,23 +502,25 @@ class DancingLights {
                     // let brightChild = canvas.sight.light.bright.getChildByName(k);
 
                     try {
-                        canvas.sight.light.bright.getChildByName(k).alpha = DancingLights.getAnimationFrame(childLight.id, childLight.data.flags.world.dancingLights.type, childLight.data.flags.world.dancingLights.minFade, childLight.data.flags.world.dancingLights.maxFade, childLight.data.flags.world.dancingLights.speed || 1, childLight.data.flags.world.dancingLights.sync || false, {
-                            blinkColorOnly: childLight.data.flags.world.dancingLights.blinkColorOnly
-                        });
-                        // Keeping in case we want to add this. Almost looks good.
-                        // canvas.sight.light.bright.children[DancingLights.brightPairs[childLight.id]].filters[1].direction = Math.random() * 360;
-                        // canvas.sight.light.bright.children[DancingLights.brightPairs[childLight.id]].filters[1].refresh();
-                        if (childLight.data.flags.world.dancingLights.type === 'fire' || childLight.data.flags.world.dancingLights.type === 'legacyfire') {
-                            // Move the fire animation
-                            canvas.sight.light.bright.getChildByName(k).light.transform.position.x = ((Math.random() - 0.5) * (childLight.id, childLight.data.flags.world.dancingLights.fireMovement || 5));
-                            canvas.sight.light.bright.getChildByName(k).light.transform.position.y = ((Math.random() - 0.5) * (childLight.data.flags.world.dancingLights.fireMovement || 5));
-                            // Not ready to give up on skew/scale. Scale could be done by clearing and redrawing, but for now we'll stick with the position shift.
-                            // canvas.sight.light.bright.children[DancingLights.brightPairs[childLight.id]].light.transform.skew.x = ((Math.random() - 0.5) / 50);
-                            // canvas.sight.light.bright.children[DancingLights.brightPairs[childLight.id]].light.transform.skew.y = ((Math.random() - 0.5) / 50);
-                        }
-                        DancingLights.lastAlpha[childLight.id] = canvas.sight.light.bright.getChildByName(k).alpha;
-                        if (DancingLights.lastAlpha[childLight.id] === 0) {
-                            DancingLights.lastAlpha[childLight.id] = 0.001;
+                        if (advanceFrame) {
+                            canvas.sight.light.bright.getChildByName(k).alpha = DancingLights.getAnimationFrame(childLight.id, childLight.data.flags.world.dancingLights.type, childLight.data.flags.world.dancingLights.minFade, childLight.data.flags.world.dancingLights.maxFade, childLight.data.flags.world.dancingLights.speed || 1, childLight.data.flags.world.dancingLights.sync || false, {
+                                blinkColorOnly: childLight.data.flags.world.dancingLights.blinkColorOnly
+                            });
+                            // Keeping in case we want to add this. Almost looks good.
+                            // canvas.sight.light.bright.children[DancingLights.brightPairs[childLight.id]].filters[1].direction = Math.random() * 360;
+                            // canvas.sight.light.bright.children[DancingLights.brightPairs[childLight.id]].filters[1].refresh();
+                            if (childLight.data.flags.world.dancingLights.type === 'fire' || childLight.data.flags.world.dancingLights.type === 'legacyfire') {
+                                // Move the fire animation
+                                canvas.sight.light.bright.getChildByName(k).light.transform.position.x = ((Math.random() - 0.5) * (childLight.id, childLight.data.flags.world.dancingLights.fireMovement || 5));
+                                canvas.sight.light.bright.getChildByName(k).light.transform.position.y = ((Math.random() - 0.5) * (childLight.data.flags.world.dancingLights.fireMovement || 5));
+                                // Not ready to give up on skew/scale. Scale could be done by clearing and redrawing, but for now we'll stick with the position shift.
+                                // canvas.sight.light.bright.children[DancingLights.brightPairs[childLight.id]].light.transform.skew.x = ((Math.random() - 0.5) / 50);
+                                // canvas.sight.light.bright.children[DancingLights.brightPairs[childLight.id]].light.transform.skew.y = ((Math.random() - 0.5) / 50);
+                            }
+                            DancingLights.lastAlpha[childLight.id] = canvas.sight.light.bright.getChildByName(k).alpha;
+                            if (DancingLights.lastAlpha[childLight.id] === 0) {
+                                DancingLights.lastAlpha[childLight.id] = 0.001;
+                            }
                         }
                     } catch (e) {
                         // Sight layer isn't active, ignore
@@ -637,9 +637,12 @@ class DancingLights {
             Hooks.on("renderTokenConfig", DancingLights.onRenderTokenConfig);
             Hooks.on("updateAmbientLight", DancingLights.onUpdateAmbientLight);
             Hooks.on("createAmbientLight", DancingLights.forceReinit);
-            Hooks.on("updateToken", () => {
-                DancingLights.forceReinit;
-                DancingLights.forceLayersUpdate()
+            Hooks.on("updateToken", (scene, token, change, diff, id) => {
+                if (change.flags) {
+                    // Only do this if flag data was changed in token. Prevents refreshing on token move for example.
+                    DancingLights.forceReinit();
+                    DancingLights.forceLayersUpdate()
+                }
             });
             Hooks.on("controlToken", DancingLights.forceReinit);
             Hooks.once("canvasReady", DancingLights.patchLighting);
@@ -728,7 +731,7 @@ class DancingLights {
                 source.alpha = game.settings.get("DancingLights", "dimBrightVisionAmount") || 0.5;
             }
             if (layer != 'vision') {
-                if(channel === 'bright' || channel === 'dim'){
+                if (channel === 'bright' || channel === 'dim') {
                     source.name = id;
                 }
                 if (channel === 'bright') {
@@ -937,7 +940,7 @@ update() {
             c.lights.clear();
 
             /* Patch start */
-            DancingLights.drawLighting();
+            DancingLights.drawLighting(false);
             /* Patch end */
         }
 

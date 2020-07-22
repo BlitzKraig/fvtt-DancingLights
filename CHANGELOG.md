@@ -25,6 +25,7 @@
 * Negative-radius lights no longer cause all dancing lights to fail
 * Lights with opacity 0 no longer revert to the default opacity (Seen as a quick flash of color when using a 'fade' light with dim/color animation enabled - This is a Foundry bug, and can be seen without DancingLights installed)
 * Light tagging system should mean no more guesstimating which light source to affect, fixing bugs where the wrong source was animated
+* Prevent frame advancing on every token/lighting update, causing choppy lighting on token move or day-night transition
 
 # 1.5.1 - 2020/07/18
 
