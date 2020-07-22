@@ -16,6 +16,7 @@
 * Refactored code for easier future maintenance & updates
 * Added light source tagging system, which should bring improvements across the board
 * Improved animation smoothness for all types
+* Improved color mapping. 2-color blink will now consistently show the correct colors for max & min fade, whole color map will now be utilised for all lights, regardless of min & max fade values
 
 ## Performance improvements
 * Object for tracking the last alpha is now cleared regularly

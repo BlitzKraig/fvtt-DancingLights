@@ -367,6 +367,16 @@ class DancingLights {
 
     }
 
+    static getColorFromAlpha(id, colorsArray, minFade, maxFade) {
+        if (minFade == undefined || maxFade == undefined || maxFade <= minFade) {
+            minFade = 0.4;
+            maxFade = 1;
+        }
+        let colorScale = chroma.scale(colorsArray).domain([minFade, maxFade]);
+        return colorScale(DancingLights.lastAlpha[id]).num();
+    }
+
+    // Used for three color blinking & no-alpha blinking
     static getBlinkColor(id, colorsArray) {
         if (!DancingLights.animationFrame[id]) {
             return;
@@ -380,16 +390,6 @@ class DancingLights {
         }
         return chroma(colorsArray[DancingLights.animationFrame[id].blinkColorIndex]).num();
 
-    }
-
-    static getFadeColor(id, colorsArray) {
-        let fadeColorScale = chroma.scale(colorsArray).domain([0, 1]);
-        return fadeColorScale(DancingLights.lastAlpha[id]).num();
-    }
-
-    static getFireColor(id, startColor, endColor) {
-        let fireColorScale = chroma.scale([startColor, endColor]).domain([0.4, 1]); //Domain retrieved from fireanim frames, change this when we update fireanim // TODO: Improve this to grab dynamically
-        return fireColorScale(DancingLights.lastAlpha[id]).num();
     }
     /* Animation Helpers End */
 
@@ -535,16 +535,20 @@ class DancingLights {
                     let dancingLightOptions = childLight.data.flags.world.dancingLights;
                     let childID = childLight.id;
                     if (dancingLightOptions.type === 'fire' || dancingLightOptions.type === 'legacyfire') {
-                        canvas.lighting.lighting.lights.beginFill(DancingLights.getFireColor(childID, dancingLightOptions.startColor || DancingLights.Constants.defaultFireColor, dancingLightOptions.endColor || DancingLights.Constants.defaultFireColor), dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
+                        canvas.lighting.lighting.lights.beginFill(DancingLights.getColorFromAlpha(childID, [dancingLightOptions.startColor || DancingLights.Constants.defaultFireColor, dancingLightOptions.endColor || DancingLights.Constants.defaultFireColor], dancingLightOptions.minFade, dancingLightOptions.maxFade), dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
                     } else if (dancingLightOptions.type === 'fade' && dancingLightOptions.blinkFadeColorEnabled !== 'none') {
                         if (dancingLightOptions.blinkFadeColorEnabled == 'two') {
-                            canvas.lighting.lighting.lights.beginFill(DancingLights.getFadeColor(childID, [dancingLightOptions.blinkFadeColor1 || '#ff0000', dancingLightOptions.blinkFadeColor2 || '#00ff00']), dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
+                            canvas.lighting.lighting.lights.beginFill(DancingLights.getColorFromAlpha(childID, [dancingLightOptions.blinkFadeColor1 || '#ff0000', dancingLightOptions.blinkFadeColor2 || '#00ff00'], dancingLightOptions.minFade, dancingLightOptions.maxFade), dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
                         } else if (dancingLightOptions.blinkFadeColorEnabled == 'three') {
-                            canvas.lighting.lighting.lights.beginFill(DancingLights.getFadeColor(childID, [dancingLightOptions.blinkFadeColor1 || '#ff0000', dancingLightOptions.blinkFadeColor2 || '#00ff00', dancingLightOptions.blinkFadeColor3 || '#0000ff']), dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
+                            canvas.lighting.lighting.lights.beginFill(DancingLights.getColorFromAlpha(childID, [dancingLightOptions.blinkFadeColor1 || '#ff0000', dancingLightOptions.blinkFadeColor2 || '#00ff00', dancingLightOptions.blinkFadeColor3 || '#0000ff'], dancingLightOptions.minFade, dancingLightOptions.maxFade), dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
                         }
                     } else if (dancingLightOptions.type === 'blink' && dancingLightOptions.blinkFadeColorEnabled !== 'none') {
                         if (dancingLightOptions.blinkFadeColorEnabled == 'two') {
-                            canvas.lighting.lighting.lights.beginFill(DancingLights.getBlinkColor(childID, [dancingLightOptions.blinkFadeColor1 || '#ff0000', dancingLightOptions.blinkFadeColor2 || '#00ff00']) || s.color, dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
+                            if (dancingLightOptions.blinkColorOnly) {
+                                canvas.lighting.lighting.lights.beginFill(DancingLights.getBlinkColor(childID, [dancingLightOptions.blinkFadeColor1 || '#ff0000', dancingLightOptions.blinkFadeColor2 || '#00ff00']) || s.color, dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
+                            } else {
+                                canvas.lighting.lighting.lights.beginFill(DancingLights.getColorFromAlpha(childID, [dancingLightOptions.blinkFadeColor1 || '#ff0000', dancingLightOptions.blinkFadeColor2 || '#00ff00'], dancingLightOptions.minFade, dancingLightOptions.maxFade) || s.color, dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
+                            }
                         } else if (dancingLightOptions.blinkFadeColorEnabled == 'three') {
                             canvas.lighting.lighting.lights.beginFill(DancingLights.getBlinkColor(childID, [dancingLightOptions.blinkFadeColor1 || '#ff0000', dancingLightOptions.blinkFadeColor2 || '#00ff00', dancingLightOptions.blinkFadeColor3 || '#0000ff']) || s.color, dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
                         }
