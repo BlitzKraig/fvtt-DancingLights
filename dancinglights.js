@@ -221,6 +221,7 @@ class DancingLights {
             max: 10,
             step: 1
         });
+        let makeDefault = DancingLights.getFormElement("Set As Default", "Spawn all future lights with these Dancing Lights settings. Tokens and Ambient Lights will have separate defaults. To revert the default to the normal light, uncheck 'Enable Dancing Lights' and check this. Note that this will 'uncheck' itself after you save the light, and must be re-checked if you want to update the defaults.", "checkbox", "makeDefault", false, "Boolean");
         let updateAll = DancingLights.getFormElement("Update All Lights", "IMPORTANT: This can take some time. Do not refresh your page until it is completed, or you risk losing data. Check this to automatically update all of the lights in the scene to match this one. This only updates the DancingLight options", "checkbox", "updateAll", false, "Boolean", {
             onClick: 'DancingLights.displayExtendedOptions(this.checked, "updateExtendedOptions");'
         });
@@ -246,7 +247,8 @@ class DancingLights {
         ${danceType}<div id="typeOptions"><div id="fireOptions">${startColor}${endColor}${movementAmount}${dimMovement}</div>
         <div id="blinkOptions">${blinkColorOnly}</div>
         <div id="blinkFadeOptions">${blinkFadeColorEnabled}<div id="blinkFadeColorOptions">${blinkFadeColor1}${blinkFadeColor2}<div id="blinkFadeColorOptionsExtended">${blinkFadeColor3}</div></div></div>
-        ${minFade}${maxFade}${dimFade}${sync}${animateDim}${speed}</div></div>`;
+        ${minFade}${maxFade}${dimFade}${sync}${animateDim}${speed}</div></div>
+        ${makeDefault}`;
         if (!isToken) {
             data += `${updateAll}<div id="updateExtendedOptions">${updateExtended}
         <div id="granularExtendedOptions">${updateExtendedHeader}${t}${x}${y}${rotation}${dim}${bright}${angle}${tintColor}${tintAlpha}${darknessThreshold}</div></div>`;
@@ -468,26 +470,81 @@ class DancingLights {
         return results;
     }
 
-    static onUpdateAmbientLight(scene, light, custom, changes, sceneID) {
+    static onCreateAmbientLight(scene, light) {
+        if(!light.flags.world){
+            light.flags.world = {};
+        }
+        light.flags.world.dancingLights = game.settings.get("DancingLights", "defaultAmbientLight");
+        DancingLights.forceReinit();
+        DancingLights.forceLayersUpdate();
+    }
 
-        if (light.flags.world && light.flags.world.dancingLights && light.flags.world.dancingLights.updateAll) {
-            light.flags.world.dancingLights.updateAll = false;
-            let updateExtended = light.flags.world.dancingLights.updateExtended;
-            let updateGranular = light.flags.world.dancingLights.updateGranular;
-            light.flags.world.dancingLights.updateExtended = false;
-            (async () => {
-                console.time('lightPromise');
+    static onUpdateAmbientLight(scene, light, changes, diff, sceneID) {
 
-                await DancingLights.syncLightConfigs(scene, light, updateExtended, updateGranular);
+        if (light.flags.world && light.flags.world.dancingLights) {
 
-                console.timeEnd('lightPromise');
-            })();
+            if (light.flags.world.dancingLights.makeDefault) {
+                light.flags.world.dancingLights.makeDefault = false;
+                if (!light.flags.world.dancingLights.enabled) {
+                    game.settings.set("DancingLights", "defaultAmbientLight", {});
+                } else {
+                    game.settings.set("DancingLights", "defaultAmbientLight", light.flags.world.dancingLights);
+                }
+            }
+
+            if (light.flags.world.dancingLights.updateAll) {
+                light.flags.world.dancingLights.updateAll = false;
+                let updateExtended = light.flags.world.dancingLights.updateExtended;
+                let updateGranular = light.flags.world.dancingLights.updateGranular;
+                light.flags.world.dancingLights.updateExtended = false;
+                (async () => {
+                    console.time('lightPromise');
+
+                    await DancingLights.syncLightConfigs(scene, light, updateExtended, updateGranular);
+
+                    console.timeEnd('lightPromise');
+                })();
+            }
         }
 
         DancingLights.destroyAllTimers();
         DancingLights.createTimers();
     }
     /* Light Config Update End */
+
+    /* Token Config */
+    static onCreateToken(scene, token) {
+        if(!token.flags.world){
+            token.flags.world = {};
+        }
+        token.flags.world.dancingLights = game.settings.get("DancingLights", "defaultTokenLight");
+        DancingLights.forceReinit();
+        DancingLights.forceLayersUpdate();
+    }
+
+    static onUpdateToken(scene, token, changes, diff, sceneID) {
+        if (!changes.flags) {
+            // return if flag data was not changed in token. Prevents refreshing on token move for example.
+            return;
+        }
+
+        if (token.flags.world && token.flags.world.dancingLights) {
+
+            if (token.flags.world.dancingLights.makeDefault) {
+                token.flags.world.dancingLights.makeDefault = false;
+                if (!token.flags.world.dancingLights.enabled) {
+                    game.settings.set("DancingLights", "defaultTokenLight", {});
+                } else {
+                    game.settings.set("DancingLights", "defaultTokenLight", token.flags.world.dancingLights);
+                }
+            }
+        }
+
+
+        DancingLights.forceReinit();
+        DancingLights.forceLayersUpdate();
+    }
+    /* Token Config End */
 
     static onTick() {
         const c = canvas.lighting.lighting.lights;
@@ -669,22 +726,26 @@ class DancingLights {
                 // window.location.reload();
             }
         })
+        game.settings.register("DancingLights", "defaultAmbientLight", {
+            name: "Default Ambient Light Settings",
+            scope: "world",
+            config: false,
+            default: {}
+        })
+        game.settings.register("DancingLights", "defaultTokenLight", {
+            name: "Default Token Light Settings",
+            scope: "world",
+            config: false,
+            default: {}
+        })
 
         if (game.settings.get("DancingLights", "enabledForClient")) {
             Hooks.on("renderLightConfig", DancingLights.onRenderLightConfig);
             Hooks.on("renderTokenConfig", DancingLights.onRenderTokenConfig);
             Hooks.on("updateAmbientLight", DancingLights.onUpdateAmbientLight);
-            Hooks.on("createAmbientLight", () => {
-                DancingLights.forceReinit();
-                DancingLights.forceLayersUpdate();
-            });
-            Hooks.on("updateToken", (scene, token, change, diff, id) => {
-                if (change.flags) {
-                    // Only do this if flag data was changed in token. Prevents refreshing on token move for example.
-                    DancingLights.forceReinit();
-                    DancingLights.forceLayersUpdate();
-                }
-            });
+            Hooks.on("createAmbientLight", DancingLights.onCreateAmbientLight);
+            Hooks.on("createToken", DancingLights.onCreateToken);
+            Hooks.on("updateToken", DancingLights.onUpdateToken);
             Hooks.on("controlToken", DancingLights.forceReinit);
             Hooks.once("canvasReady", DancingLights.patchLighting);
             Hooks.on("canvasReady", DancingLights.forceReinit);
@@ -741,7 +802,7 @@ class DancingLights {
                 }
                 if (child && child.data.flags && child.data.flags.world && child.data.flags.world.dancingLights) {
                     dancingLightOptions = child.data.flags.world.dancingLights;
-                }            
+                }
             }
             /* Monkeypatch block end */
 

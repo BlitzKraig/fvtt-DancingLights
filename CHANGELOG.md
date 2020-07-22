@@ -7,6 +7,7 @@
     * The new Fire system is procedural, and you should be able to alter the speed without causing choppiness. 
 * Added ability to set min/max fade
 * Added multiple options to animate the dim radius, including fade values, fire movement and blurring
+* Added functionality to set a default light template via checkbox in light & token settings, spawning all future lights with the same dancing light settings. (Ambient Lights and Tokens have separately stored defaults)
 * Added support for lib - ColorSettings (https://github.com/ardittristan/VTTColorSettings)
 
 ## Misc Changes
