@@ -690,6 +690,8 @@ class DancingLights {
             let channel = keys.c;
             let layer = keys.layerKey;
             if (layer != 'vision' && channel === 'bright') {
+
+                //TODO: Make this smarter, stop looping once we've found it
                 canvas.lighting.objects.children.forEach((child) => {
                     if (child.brightRadius <= 0) {
                         return;
@@ -725,22 +727,27 @@ class DancingLights {
             if (layer === 'vision' && game.settings.get("DancingLights", "dimBrightVision")) {
                 source.alpha = game.settings.get("DancingLights", "dimBrightVisionAmount") || 0.5;
             }
-            if (layer != 'vision' && channel === 'bright') {
-                source.name = id;
-                if (dancingLightOptions && dancingLightOptions.enabled) {
-                    if (dancingLightOptions.blurEnabled) {
-                        source.filters = [new PIXI.filters.BlurFilter(dancingLightOptions.blurAmount)]
-                        // Keeping in case we want to add this. Almost looks good.
-                        // source.filters.push(new PIXI.filters.GlitchFilter({slices:30, offset: 5, direction: 45, average: true}));
-                    }
-                    source.alpha = DancingLights.lastAlpha[childID]
-                    if (dancingLightOptions.type === 'fire' || dancingLightOptions.type === 'legacyfire') {
-                        try {
-                            source.light.transform.position.x = ((Math.random() - 0.5) * (dancingLightOptions.fireMovement || 5));
-                            source.light.transform.position.y = ((Math.random() - 0.5) * (dancingLightOptions.fireMovement || 5));
-                            // canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].light.transform.skew.x = ((Math.random() - 0.5) / 50);
-                            // canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].light.transform.skew.y = ((Math.random() - 0.5) / 50);
-                        } catch (e) {}
+            if (layer != 'vision') {
+                if(channel === 'bright' || channel === 'dim'){
+                    source.name = id;
+                }
+                if (channel === 'bright') {
+
+                    if (dancingLightOptions && dancingLightOptions.enabled) {
+                        if (dancingLightOptions.blurEnabled) {
+                            source.filters = [new PIXI.filters.BlurFilter(dancingLightOptions.blurAmount)]
+                            // Keeping in case we want to add this. Almost looks good.
+                            // source.filters.push(new PIXI.filters.GlitchFilter({slices:30, offset: 5, direction: 45, average: true}));
+                        }
+                        source.alpha = DancingLights.lastAlpha[childID]
+                        if (dancingLightOptions.type === 'fire' || dancingLightOptions.type === 'legacyfire') {
+                            try {
+                                source.light.transform.position.x = ((Math.random() - 0.5) * (dancingLightOptions.fireMovement || 5));
+                                source.light.transform.position.y = ((Math.random() - 0.5) * (dancingLightOptions.fireMovement || 5));
+                                // canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].light.transform.skew.x = ((Math.random() - 0.5) / 50);
+                                // canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].light.transform.skew.y = ((Math.random() - 0.5) / 50);
+                            } catch (e) {}
+                        }
                     }
                 }
             }
