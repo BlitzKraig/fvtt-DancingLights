@@ -2,6 +2,7 @@
 
 ![DancingLights Release](https://github.com/BlitzKraig/fvtt-DancingLights/workflows/DancingLights%20Release/badge.svg)
 ![Latest Release Download Count](https://img.shields.io/github/downloads/BlitzKraig/fvtt-DancingLights/latest/dancinglights-release.zip)
+
 [![ko-fi](https://www.ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/Q5Q01YIEJ)
 
 Better ambient lighting for Foundry VTT.
