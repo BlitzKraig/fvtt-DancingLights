@@ -107,8 +107,21 @@ class DancingLights {
             element += `</select>`;
 
         } else if (inputType === "color") {
-            element += `<input class="color" type="text" name="flags.world.dancingLights.${name}" value="${value}" data-dtype="String"></input>`
-            element += `<input type="color" value="${value}" data-edit="flags.world.dancingLights.${name}">`
+            let standardColor = () => {
+                return `<input class="color" type="text" name="flags.world.dancingLights.${name}" value="${value}" data-dtype="String"></input>
+                <input type="color" value="${value}" data-edit="flags.world.dancingLights.${name}">`
+            }
+            if (game.settings.get("DancingLights", "useLibColorSettings")) {
+                try {
+                    window.Ardittristan.ColorSetting.tester
+                    element += `<input type="text" name="flags.world.dancingLights.${name}" value=${value} is="colorpicker-input" data-permanent data-responsive-color>`
+                } catch {
+                    element += standardColor();
+                }
+            } else {
+                element += standardColor();
+            }
+
         } else {
             element += `<input type="${inputType}" name="flags.world.dancingLights.${name}" value="${value}" data-dtype="${dType}" ${inputType=='checkbox' && value === true?'checked':''} ${inputType =='checkbox' && opt && opt.onClick?`onclick='${opt.onClick}'`:''} >`;
         }
@@ -242,7 +255,7 @@ class DancingLights {
 
     /* Animation Helpers */
     static getAnimationFrame(id, type, minFade, maxFade, speed, sync, opt) {
-        if(minFade == undefined || maxFade == undefined || maxFade <= minFade){
+        if (minFade == undefined || maxFade == undefined || maxFade <= minFade) {
             minFade = 0.4;
             maxFade = 1;
         }
@@ -317,7 +330,7 @@ class DancingLights {
                 if (opt.blinkColorOnly) {
                     return 1
                 }
-                return DancingLights.animationFrame[id].frame == 0?minFade:maxFade;
+                return DancingLights.animationFrame[id].frame == 0 ? minFade : maxFade;
             case 'fade':
                 if (!DancingLights.animationFrame[id].alreadyPlaying) {
                     if (!sync) {
@@ -338,7 +351,7 @@ class DancingLights {
                 if (DancingLights.animationFrame[id].frame >= (10 * speed)) {
                     alpha = 0 + (DancingLights.animationFrame[id].frame - (10 * speed)) / 10 / speed;
                 }
-                
+
                 return DancingLights.Utilities.scale(alpha, 0, 1, minFade, maxFade);
                 // return alpha;
             case 'electricfault':
@@ -564,6 +577,16 @@ class DancingLights {
                 window.location.reload();
             }
         })
+
+        game.settings.register("DancingLights", "useLibColorSettings", {
+            name: "Use lib - Color Settings",
+            hint: "Use the Color Settings library for color pickers. Note that this lib must be installed and enabled as a module. https://github.com/ardittristan/VTTColorSettings",
+            scope: "world",
+            config: true,
+            default: false,
+            type: Boolean
+        })
+
         game.settings.register("DancingLights", "dimBrightVision", {
             name: "Dim token Bright Vision (Per client)",
             hint: "Changing this will refresh your page! Disable this to revert bright vision circles back to default. Note that you will not see some Dancing Lights effects properly while they are within your bright vision radius.",
@@ -614,10 +637,24 @@ class DancingLights {
             Hooks.on("renderTokenConfig", DancingLights.onRenderTokenConfig);
             Hooks.on("updateAmbientLight", DancingLights.onUpdateAmbientLight);
             Hooks.on("createAmbientLight", DancingLights.forceReinit);
-            Hooks.on("updateToken", ()=>{DancingLights.forceReinit; DancingLights.forceLayersUpdate()});
+            Hooks.on("updateToken", () => {
+                DancingLights.forceReinit;
+                DancingLights.forceLayersUpdate()
+            });
             Hooks.on("controlToken", DancingLights.forceReinit);
             Hooks.once("canvasReady", DancingLights.patchLighting);
             Hooks.on("canvasReady", DancingLights.forceReinit);
+            Hooks.once('ready', () => {
+                if (game.settings.get("DancingLights", "useLibColorSettings")) {
+                    try {
+                        window.Ardittristan.ColorSetting.tester
+                    } catch {
+                        ui.notifications.notify('You have "lib - ColorSettings" enabled for Dancing Lights, but do not appear to have the lib module enabled. Please make sure you have the "lib - ColorSettings" module installed, or disable the lib in Dancing Lights settings', "error", {
+                            permanent: true
+                        });
+                    }
+                }
+            });
             if (game.system.id === 'pf1') {
                 Hooks.on("renderTokenConfigPF", DancingLights.onRenderTokenConfig);
             }
@@ -821,7 +858,6 @@ update() {
                         if ((r !== 0) && s.darknessThreshold <= canvas.lighting._darkness) {
                             let channel = light[c];
                             channel.addChild(this._drawSource(channels[c].hex, {
-                                // channel.addChild(this._drawSource(channels[c].hex, layerKey == 'lights' ? k : 'vision', {
                                 x: s.x,
                                 y: s.y,
                                 radius: r,
