@@ -2,8 +2,7 @@
 
 ![DancingLights Release](https://github.com/BlitzKraig/fvtt-DancingLights/workflows/DancingLights%20Release/badge.svg)
 ![Latest Release Download Count](https://img.shields.io/github/downloads/BlitzKraig/fvtt-DancingLights/latest/dancinglights-release.zip)
-
-<a href="https://www.buymeacoffee.com/Blitzkraig" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/lato-orange.png" alt="Buy Me A Coffee" height=30></a>
+[![ko-fi](https://www.ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/Q5Q01YIEJ)
 
 Better ambient lighting for Foundry VTT.
 Designed to avoid server-side light updates by directly modifying the lights PIXI elements client-side.

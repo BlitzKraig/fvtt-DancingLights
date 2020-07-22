@@ -6,6 +6,7 @@
 * Improved fire effects - Semi-breaking change! Any current fire lights will use the new system. If you need to go back to the old system, switch these lights to use 'legacyfire' - Note that this will be removed in the future
     * The new Fire system is procedural, and you should be able to alter the speed without causing choppiness. 
 * Added ability to set min/max fade
+* Added support for lib - ColorSettings (https://github.com/ardittristan/VTTColorSettings)
 
 ## Misc Changes
 
