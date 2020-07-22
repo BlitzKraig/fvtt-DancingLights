@@ -6,6 +6,7 @@
 * Improved fire effects - Semi-breaking change! Any current fire lights will use the new system. If you need to go back to the old system, switch these lights to use 'legacyfire' - Note that this will be removed in the future
     * The new Fire system is procedural, and you should be able to alter the speed without causing choppiness. 
 * Added ability to set min/max fade
+* Added multiple options to animate the dim radius, including fade values, fire movement and blurring
 * Added support for lib - ColorSettings (https://github.com/ardittristan/VTTColorSettings)
 
 ## Misc Changes
@@ -17,6 +18,7 @@
 * Added light source tagging system, which should bring improvements across the board
 * Improved animation smoothness for all types
 * Improved color mapping. 2-color blink will now consistently show the correct colors for max & min fade, whole color map will now be utilised for all lights, regardless of min & max fade values
+* Clarified some settings
 
 ## Performance improvements
 * Object for tracking the last alpha is now cleared regularly
@@ -27,6 +29,7 @@
 * Lights with opacity 0 no longer revert to the default opacity (Seen as a quick flash of color when using a 'fade' light with dim/color animation enabled - This is a Foundry bug, and can be seen without DancingLights installed)
 * Light tagging system should mean no more guesstimating which light source to affect, fixing bugs where the wrong source was animated
 * Prevent frame advancing on every token/lighting update, causing choppy lighting on token move or day-night transition
+* Creating a new light no longer requires token movement to show if a player token is active
 
 # 1.5.1 - 2020/07/18
 

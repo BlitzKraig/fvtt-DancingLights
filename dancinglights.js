@@ -61,7 +61,7 @@ class DancingLights {
             if (Math.random() * Math.min(frameData.functionCounter / (10 * speed), 1) > 0.95) {
                 // console.log("Switched");
                 frameData.increasing = !frameData.increasing;
-                functionCounter = 0;
+                frameData.functionCounter = 0;
             }
             if (frameData.increasing) {
                 eMin = current;
@@ -168,7 +168,15 @@ class DancingLights {
         let blurEnabled = DancingLights.getFormElement("Enable Blur", "", "checkbox", "blurEnabled", objectConfig.object.data.flags.world.dancingLights.blurEnabled || false, "Boolean", {
             onClick: 'DancingLights.displayExtendedOptions(this.checked, "blurOptions");'
         });
-        let blurAmount = DancingLights.getFormElement("Blur Amount", "", "range", "blurAmount", typeof objectConfig.object.data.flags.world.dancingLights.blurAmount !== 'undefined' ? objectConfig.object.data.flags.world.dancingLights.blurAmount : 10, "Number", {
+        let blurAmount = DancingLights.getFormElement("Blur Amount", "Adds a blur to the bright radius", "range", "blurAmount", typeof objectConfig.object.data.flags.world.dancingLights.blurAmount !== 'undefined' ? objectConfig.object.data.flags.world.dancingLights.blurAmount : 10, "Number", {
+            min: 0,
+            max: 100,
+            step: 1
+        });
+        let dimBlurEnabled = DancingLights.getFormElement("Enable Dim Blur", "Adds a blur to the dim radius", "checkbox", "dimBlurEnabled", objectConfig.object.data.flags.world.dancingLights.dimBlurEnabled || false, "Boolean", {
+            onClick: 'DancingLights.displayExtendedOptions(this.checked, "dimBlurOptions");'
+        });
+        let dimBlurAmount = DancingLights.getFormElement("Dim Blur Amount", "", "range", "dimBlurAmount", typeof objectConfig.object.data.flags.world.dancingLights.dimBlurAmount !== 'undefined' ? objectConfig.object.data.flags.world.dancingLights.dimBlurAmount : 10, "Number", {
             min: 0,
             max: 100,
             step: 1
@@ -187,8 +195,11 @@ class DancingLights {
             max: 1,
             step: 0.05
         });
+        let dimFade = DancingLights.getFormElement("Enable Dim Radius Fading", "The Dim light radius will fade with the bright. Note that 'Enable Dim/Color Animation' will also need to be enabled for a light to disappear when it reaches 0 opacity/fade", "checkbox", "dimFade", objectConfig.object.data.flags.world.dancingLights.dimFade || false, "Boolean");
         let sync = DancingLights.getFormElement("Enable Sync", "Synchronize animations. Lights with the same animation type & speed with this checked will animate together", "checkbox", "sync", objectConfig.object.data.flags.world.dancingLights.sync || false, "Boolean");
-        let animateDim = DancingLights.getFormElement("Enable Dim/Color Animation", "If checked, the light color will also dim with the light. Particularly useful for having a blinking light 'turn off'. This overrides the 'Light Opacity' in the default light settings. Disable this to keep the opacity as set.", "checkbox", "animateDimAlpha", objectConfig.object.data.flags.world.dancingLights.animateDimAlpha || false, "Boolean"); //animateDimAlpha
+
+        // Bad name, but keeping so as not to break previous lighting for users
+        let animateDim = DancingLights.getFormElement("Enable Dim/Color Animation", "Dim the lighting color along with the light. Particularly useful for having a blinking light 'turn off' when used with 'Enable Dim Radius Fading' and 'Minimum Fade' set to 0. This overrides the 'Light Opacity' in the default light settings. Disable this to keep the opacity as set.", "checkbox", "animateDimAlpha", objectConfig.object.data.flags.world.dancingLights.animateDimAlpha || false, "Boolean"); //animateDimAlpha
         let startColor = DancingLights.getFormElement("Fire Color Dim", "The light color when the fire is at its dimmest", "color", "startColor", objectConfig.object.data.flags.world.dancingLights.startColor || DancingLights.Constants.defaultFireColor, "String");
         let endColor = DancingLights.getFormElement("Fire Color Bright", "The light color when the fire is at its brightest", "color", "endColor", objectConfig.object.data.flags.world.dancingLights.endColor || DancingLights.Constants.defaultFireColor, "String");
         let blinkColorOnly = DancingLights.getFormElement("Blink Color Only", "Do not change the alpha of the Blink light, only switch between colors. Useful for 'disco lights'", "checkbox", "blinkColorOnly", objectConfig.object.data.flags.world.dancingLights.blinkColorOnly || false, "Boolean");
@@ -204,6 +215,7 @@ class DancingLights {
             max: 40,
             step: 1
         });
+        let dimMovement = DancingLights.getFormElement("Enable Dim Radius Movement", "The dim light radius will also move around based on 'Fire Movement Amount'", "checkbox", "dimMovement", objectConfig.object.data.flags.world.dancingLights.dimMovement || false, "Boolean");
         let speed = DancingLights.getFormElement("Speed", "The speed of the 'animations'. Lower is faster. Note that the movement of the 'fire' is not affected by this, only the alpha changes. The 'electricfault' type triggers more often with higher numbers here.", "range", "speed", typeof objectConfig.object.data.flags.world.dancingLights.speed !== 'undefined' ? objectConfig.object.data.flags.world.dancingLights.speed : 1, "Number", {
             min: 1,
             max: 10,
@@ -228,11 +240,13 @@ class DancingLights {
         let tintAlpha = DancingLights.getFormElement("Light Opacity", "", "checkbox", "updateGranular.tintAlpha", true, "Boolean");
         let darknessThreshold = DancingLights.getFormElement("Darkness Threshold", "", "checkbox", "updateGranular.darknessThreshold", true, "Boolean");
 
-        let data = `${dancingLightsHeader}${dancingLightsEnabled}<div id="dancingLightsOptions">${blurEnabled}
-        <div id="blurOptions">${blurAmount}</div>${danceType}<div id="typeOptions"><div id="fireOptions">${startColor}${endColor}${movementAmount}</div>
+        let data = `${dancingLightsHeader}${dancingLightsEnabled}<div id="dancingLightsOptions">
+        ${blurEnabled}<div id="blurOptions">${blurAmount}</div>
+        ${dimBlurEnabled}<div id="dimBlurOptions">${dimBlurAmount}</div>
+        ${danceType}<div id="typeOptions"><div id="fireOptions">${startColor}${endColor}${movementAmount}${dimMovement}</div>
         <div id="blinkOptions">${blinkColorOnly}</div>
         <div id="blinkFadeOptions">${blinkFadeColorEnabled}<div id="blinkFadeColorOptions">${blinkFadeColor1}${blinkFadeColor2}<div id="blinkFadeColorOptionsExtended">${blinkFadeColor3}</div></div></div>
-        ${minFade}${maxFade}${sync}${animateDim}${speed}</div></div>`;
+        ${minFade}${maxFade}${dimFade}${sync}${animateDim}${speed}</div></div>`;
         if (!isToken) {
             data += `${updateAll}<div id="updateExtendedOptions">${updateExtended}
         <div id="granularExtendedOptions">${updateExtendedHeader}${t}${x}${y}${rotation}${dim}${bright}${angle}${tintColor}${tintAlpha}${darknessThreshold}</div></div>`;
@@ -242,6 +256,7 @@ class DancingLights {
 
         DancingLights.displayExtendedOptions(objectConfig.object.data.flags.world.dancingLights.enabled || false, "dancingLightsOptions");
         DancingLights.displayExtendedOptions(objectConfig.object.data.flags.world.dancingLights.blurEnabled || false, "blurOptions");
+        DancingLights.displayExtendedOptions(objectConfig.object.data.flags.world.dancingLights.dimBlurEnabled || false, "dimBlurOptions");
         DancingLights.displayExtendedOptions(objectConfig.object.data.flags.world.dancingLights.type && objectConfig.object.data.flags.world.dancingLights.type !== 'none', 'typeOptions');
         DancingLights.displayExtendedOptions(objectConfig.object.data.flags.world.dancingLights.type == 'fire' || objectConfig.object.data.flags.world.dancingLights.type == 'legacyfire', 'fireOptions');
         DancingLights.displayExtendedOptions(objectConfig.object.data.flags.world.dancingLights.type == 'blink', "blinkOptions");
@@ -490,7 +505,7 @@ class DancingLights {
 
             let childLight = canvas.lighting.get(k.split('.')[1]) || canvas.tokens.get(k.split('.')[1]);
 
-            if (childLight && childLight.brightRadius > 0) {
+            if (childLight) {
 
                 if (!childLight.data.flags.world) {
                     childLight.data.flags.world = {};
@@ -499,31 +514,50 @@ class DancingLights {
                     childLight.data.flags.world.dancingLights = {};
                 }
                 if (childLight.data.flags.world.dancingLights.enabled) {
-                    // let brightChild = canvas.sight.light.bright.getChildByName(k);
-
+                    let brightChild = canvas.sight.light.bright.getChildByName(k);
+                    let dimChild = canvas.sight.light.dim.getChildByName(k);
                     try {
                         if (advanceFrame) {
-                            canvas.sight.light.bright.getChildByName(k).alpha = DancingLights.getAnimationFrame(childLight.id, childLight.data.flags.world.dancingLights.type, childLight.data.flags.world.dancingLights.minFade, childLight.data.flags.world.dancingLights.maxFade, childLight.data.flags.world.dancingLights.speed || 1, childLight.data.flags.world.dancingLights.sync || false, {
+                            var newAlpha = DancingLights.getAnimationFrame(childLight.id, childLight.data.flags.world.dancingLights.type, childLight.data.flags.world.dancingLights.minFade, childLight.data.flags.world.dancingLights.maxFade, childLight.data.flags.world.dancingLights.speed || 1, childLight.data.flags.world.dancingLights.sync || false, {
                                 blinkColorOnly: childLight.data.flags.world.dancingLights.blinkColorOnly
                             });
+                            if (brightChild) {
+                                brightChild.alpha = newAlpha;
+                            }
+                            if (dimChild && childLight.data.flags.world.dancingLights.dimFade) {
+                                dimChild.alpha = newAlpha;
+                            }
                             // Keeping in case we want to add this. Almost looks good.
                             // canvas.sight.light.bright.children[DancingLights.brightPairs[childLight.id]].filters[1].direction = Math.random() * 360;
                             // canvas.sight.light.bright.children[DancingLights.brightPairs[childLight.id]].filters[1].refresh();
                             if (childLight.data.flags.world.dancingLights.type === 'fire' || childLight.data.flags.world.dancingLights.type === 'legacyfire') {
                                 // Move the fire animation
-                                canvas.sight.light.bright.getChildByName(k).light.transform.position.x = ((Math.random() - 0.5) * (childLight.id, childLight.data.flags.world.dancingLights.fireMovement || 5));
-                                canvas.sight.light.bright.getChildByName(k).light.transform.position.y = ((Math.random() - 0.5) * (childLight.data.flags.world.dancingLights.fireMovement || 5));
+                                if (brightChild) {
+                                    brightChild.light.transform.position.x = ((Math.random() - 0.5) * (childLight.id, childLight.data.flags.world.dancingLights.fireMovement || 5));
+                                    brightChild.light.transform.position.y = ((Math.random() - 0.5) * (childLight.data.flags.world.dancingLights.fireMovement || 5));
+                                }
+                                if (dimChild && childLight.data.flags.world.dancingLights.dimMovement) {
+                                    dimChild.light.transform.position.x = ((Math.random() - 0.5) * (childLight.id, childLight.data.flags.world.dancingLights.fireMovement || 5));
+                                    dimChild.light.transform.position.y = ((Math.random() - 0.5) * (childLight.data.flags.world.dancingLights.fireMovement || 5));
+                                }
                                 // Not ready to give up on skew/scale. Scale could be done by clearing and redrawing, but for now we'll stick with the position shift.
                                 // canvas.sight.light.bright.children[DancingLights.brightPairs[childLight.id]].light.transform.skew.x = ((Math.random() - 0.5) / 50);
                                 // canvas.sight.light.bright.children[DancingLights.brightPairs[childLight.id]].light.transform.skew.y = ((Math.random() - 0.5) / 50);
                             }
-                            DancingLights.lastAlpha[childLight.id] = canvas.sight.light.bright.getChildByName(k).alpha;
-                            if (DancingLights.lastAlpha[childLight.id] === 0) {
-                                DancingLights.lastAlpha[childLight.id] = 0.001;
+                            if (brightChild) {
+                                DancingLights.lastAlpha[childLight.id] = brightChild.alpha;
+                                if (DancingLights.lastAlpha[childLight.id] === 0) {
+                                    DancingLights.lastAlpha[childLight.id] = 0.001;
+                                }
+                            } else if (dimChild && childLight.data.flags.world.dancingLights.dimFade) {
+                                DancingLights.lastAlpha[childLight.id] = dimChild.alpha;
+                                if (DancingLights.lastAlpha[childLight.id] === 0) {
+                                    DancingLights.lastAlpha[childLight.id] = 0.001;
+                                }
                             }
                         }
                     } catch (e) {
-                        // Sight layer isn't active, ignore
+                        console.log(e);
                     }
 
 
@@ -640,12 +674,15 @@ class DancingLights {
             Hooks.on("renderLightConfig", DancingLights.onRenderLightConfig);
             Hooks.on("renderTokenConfig", DancingLights.onRenderTokenConfig);
             Hooks.on("updateAmbientLight", DancingLights.onUpdateAmbientLight);
-            Hooks.on("createAmbientLight", DancingLights.forceReinit);
+            Hooks.on("createAmbientLight", () => {
+                DancingLights.forceReinit();
+                DancingLights.forceLayersUpdate();
+            });
             Hooks.on("updateToken", (scene, token, change, diff, id) => {
                 if (change.flags) {
                     // Only do this if flag data was changed in token. Prevents refreshing on token move for example.
                     DancingLights.forceReinit();
-                    DancingLights.forceLayersUpdate()
+                    DancingLights.forceLayersUpdate();
                 }
             });
             Hooks.on("controlToken", DancingLights.forceReinit);
@@ -692,31 +729,19 @@ class DancingLights {
         } = {}, keys) {
             /* Monkeypatch block */
             let dancingLightOptions;
-            let childID;
-            let id = keys.k;
+            let [type, id] = keys.k.split('.');
             let channel = keys.c;
             let layer = keys.layerKey;
-            if (layer != 'vision' && channel === 'bright') {
-
-                //TODO: Make this smarter, stop looping once we've found it
-                canvas.lighting.objects.children.forEach((child) => {
-                    if (child.brightRadius <= 0) {
-                        return;
-                    }
-                    if (id.split('.')[1] === child.id) {
-                        dancingLightOptions = child.data.flags.world.dancingLights;
-                        childID = child.id;
-                    }
-                });
-                canvas.tokens.objects.children.forEach((child) => {
-                    if (child.brightLightRadius <= 0) {
-                        return;
-                    }
-                    if (id.split('.')[1] === child.id) {
-                        dancingLightOptions = child.data.flags.world.dancingLights;
-                        childID = child.id;
-                    }
-                });
+            if (layer != 'vision' && (channel === 'bright' || channel === 'dim')) {
+                let child;
+                if (type === 'Light') {
+                    child = canvas.lighting.get(id);
+                } else if (type === 'Token') {
+                    child = canvas.tokens.get(id);
+                }
+                if (child && child.data.flags && child.data.flags.world && child.data.flags.world.dancingLights) {
+                    dancingLightOptions = child.data.flags.world.dancingLights;
+                }            
             }
             /* Monkeypatch block end */
 
@@ -735,24 +760,45 @@ class DancingLights {
                 source.alpha = game.settings.get("DancingLights", "dimBrightVisionAmount") || 0.5;
             }
             if (layer != 'vision') {
-                if (channel === 'bright' || channel === 'dim') {
-                    source.name = id;
-                }
                 if (channel === 'bright') {
-
+                    source.name = `${type}.${id}`;
                     if (dancingLightOptions && dancingLightOptions.enabled) {
                         if (dancingLightOptions.blurEnabled) {
-                            source.filters = [new PIXI.filters.BlurFilter(dancingLightOptions.blurAmount)]
+                            if (dancingLightOptions.blurAmount == 0) {
+                                source.filters = [];
+                            } else {
+                                source.filters = [new PIXI.filters.BlurFilter(dancingLightOptions.blurAmount)]
+                            }
                             // Keeping in case we want to add this. Almost looks good.
                             // source.filters.push(new PIXI.filters.GlitchFilter({slices:30, offset: 5, direction: 45, average: true}));
                         }
-                        source.alpha = DancingLights.lastAlpha[childID]
+                        source.alpha = DancingLights.lastAlpha[id]
                         if (dancingLightOptions.type === 'fire' || dancingLightOptions.type === 'legacyfire') {
                             try {
                                 source.light.transform.position.x = ((Math.random() - 0.5) * (dancingLightOptions.fireMovement || 5));
                                 source.light.transform.position.y = ((Math.random() - 0.5) * (dancingLightOptions.fireMovement || 5));
                                 // canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].light.transform.skew.x = ((Math.random() - 0.5) / 50);
                                 // canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].light.transform.skew.y = ((Math.random() - 0.5) / 50);
+                            } catch (e) {}
+                        }
+                    }
+                } else if (channel === 'dim') {
+                    source.name = `${type}.${id}`;
+                    if (dancingLightOptions && dancingLightOptions.enabled) {
+                        if (dancingLightOptions.dimBlurEnabled) {
+                            if (dancingLightOptions.dimBlurAmount == 0) {
+                                source.filters = [];
+                            } else {
+                                source.filters = [new PIXI.filters.BlurFilter(dancingLightOptions.dimBlurAmount)]
+                            }
+                        }
+                        if (dancingLightOptions.dimFade) {
+                            source.alpha = DancingLights.lastAlpha[id]
+                        }
+                        if ((dancingLightOptions.type === 'fire' || dancingLightOptions.type === 'legacyfire') && dancingLightOptions.dimMovement) {
+                            try {
+                                source.light.transform.position.x = ((Math.random() - 0.5) * (dancingLightOptions.fireMovement || 5));
+                                source.light.transform.position.y = ((Math.random() - 0.5) * (dancingLightOptions.fireMovement || 5));
                             } catch (e) {}
                         }
                     }
