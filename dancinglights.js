@@ -27,10 +27,14 @@ class DancingLights {
     static lastAlpha = {};
     static timer;
     static animationFrame = {};
+    static syncedFireFrame;
 
     //TODO
     static syncedFireData = {};
 
+    static getSyncedFireFrame() {
+        // Get fireframe between 0 and 1, map it to min&max
+    }
     static calculateNewFireFrame(min, max, current, frameData, speed, ease = 0.2) {
 
         if (frameData.functionCounter == undefined) {
@@ -197,6 +201,7 @@ class DancingLights {
         });
         let dimFade = DancingLights.getFormElement("Enable Dim Radius Fading", "The Dim light radius will fade with the bright. Note that 'Enable Dim/Color Animation' will also need to be enabled for a light to disappear when it reaches 0 opacity/fade", "checkbox", "dimFade", objectConfig.object.data.flags.world.dancingLights.dimFade || false, "Boolean");
         let sync = DancingLights.getFormElement("Enable Sync", "Synchronize animations. Lights with the same animation type & speed with this checked will animate together", "checkbox", "sync", objectConfig.object.data.flags.world.dancingLights.sync || false, "Boolean");
+        let masterFire = DancingLights.getFormElement("Set As Master Fire", "All 'fire' type lights with 'Enable Sync' will be synchronised to this light. Note that this checkbox will disable itself once the light has updated, but the fire will be set as master. Deleting this light, or changing its type, will lose the sync.", "checkbox", "masterFire", false, "Boolean");
 
         // Bad name, but keeping so as not to break previous lighting for users
         let animateDim = DancingLights.getFormElement("Enable Dim/Color Animation", "Dim the lighting color along with the light. Particularly useful for having a blinking light 'turn off' when used with 'Enable Dim Radius Fading' and 'Minimum Fade' set to 0. This overrides the 'Light Opacity' in the default light settings. Disable this to keep the opacity as set.", "checkbox", "animateDimAlpha", objectConfig.object.data.flags.world.dancingLights.animateDimAlpha || false, "Boolean"); //animateDimAlpha
@@ -247,7 +252,9 @@ class DancingLights {
         ${danceType}<div id="typeOptions"><div id="fireOptions">${startColor}${endColor}${movementAmount}${dimMovement}</div>
         <div id="blinkOptions">${blinkColorOnly}</div>
         <div id="blinkFadeOptions">${blinkFadeColorEnabled}<div id="blinkFadeColorOptions">${blinkFadeColor1}${blinkFadeColor2}<div id="blinkFadeColorOptionsExtended">${blinkFadeColor3}</div></div></div>
-        ${minFade}${maxFade}${dimFade}${sync}${animateDim}${speed}</div></div>
+        ${minFade}${maxFade}${dimFade}${sync}
+        ${masterFire}
+        ${animateDim}${speed}</div></div>
         ${makeDefault}`;
         if (!isToken) {
             data += `${updateAll}<div id="updateExtendedOptions">${updateExtended}
@@ -440,6 +447,9 @@ class DancingLights {
 
     /* Light Config Update */
     static async syncLightConfigs(scene, light, updateExtended, updateGranular) {
+        if (!game.user.isGM) {
+            return
+        }
         ui.notifications.notify(`Updating all lights in the scene, do not refresh!`);
         let lightId = light.id;
         const lights = scene.data.lights;
@@ -470,40 +480,56 @@ class DancingLights {
         return results;
     }
 
-    static onCreateAmbientLight(scene, light) {
-        if(!light.flags.world){
+    static async onPreCreateAmbientLight(scene, light) {
+        if (!game.user.isGM) {
+            return
+        }
+        if (!light.flags) {
+            light.flags = {};
+        }
+        if (!light.flags.world) {
             light.flags.world = {};
         }
-        light.flags.world.dancingLights = game.settings.get("DancingLights", "defaultAmbientLight");
-        DancingLights.forceReinit();
-        DancingLights.forceLayersUpdate();
+        if (!light.flags.world.dancingLights && game.settings.get("DancingLights", "defaultAmbientLight") != {}) {
+            light.flags.world.dancingLights = game.settings.get("DancingLights", "defaultAmbientLight");
+        }
     }
 
     static onUpdateAmbientLight(scene, light, changes, diff, sceneID) {
 
-        if (light.flags.world && light.flags.world.dancingLights) {
+        if (game.user.isGM) {
+            if (light.flags.world && light.flags.world.dancingLights) {
 
-            if (light.flags.world.dancingLights.makeDefault) {
-                light.flags.world.dancingLights.makeDefault = false;
-                if (!light.flags.world.dancingLights.enabled) {
-                    game.settings.set("DancingLights", "defaultAmbientLight", {});
-                } else {
-                    game.settings.set("DancingLights", "defaultAmbientLight", light.flags.world.dancingLights);
+                if (light.flags.world.dancingLights.makeDefault) {
+                    light.flags.world.dancingLights.makeDefault = false;
+                    if (!light.flags.world.dancingLights.enabled) {
+                        game.settings.set("DancingLights", "defaultAmbientLight", {});
+                    } else {
+                        game.settings.set("DancingLights", "defaultAmbientLight", light.flags.world.dancingLights);
+                    }
                 }
-            }
+                if (light.flags.world.dancingLights.masterFire) {
+                    if (!game.scenes.viewed.data.flags) {
+                        game.scenes.viewed.data.flags = {};
+                    }
+                    if (!game.scenes.viewed.data.flags.world) {
+                        game.scenes.viewed.data.flags.world = {};
+                    }
+                    if (!game.scenes.viewed.data.flags.world.dancingLights) {
+                        game.scenes.viewed.data.flags.world.dancingLights = {};
+                    }
+                    game.scenes.viewed.data.flags.world.dancingLights.masterFireID = light.id;
+                }
 
-            if (light.flags.world.dancingLights.updateAll) {
-                light.flags.world.dancingLights.updateAll = false;
-                let updateExtended = light.flags.world.dancingLights.updateExtended;
-                let updateGranular = light.flags.world.dancingLights.updateGranular;
-                light.flags.world.dancingLights.updateExtended = false;
-                (async () => {
-                    console.time('lightPromise');
-
-                    await DancingLights.syncLightConfigs(scene, light, updateExtended, updateGranular);
-
-                    console.timeEnd('lightPromise');
-                })();
+                if (light.flags.world.dancingLights.updateAll) {
+                    light.flags.world.dancingLights.updateAll = false;
+                    let updateExtended = light.flags.world.dancingLights.updateExtended;
+                    let updateGranular = light.flags.world.dancingLights.updateGranular;
+                    light.flags.world.dancingLights.updateExtended = false;
+                    (async () => {
+                        await DancingLights.syncLightConfigs(scene, light, updateExtended, updateGranular);
+                    })();
+                }
             }
         }
 
@@ -513,13 +539,19 @@ class DancingLights {
     /* Light Config Update End */
 
     /* Token Config */
-    static onCreateToken(scene, token) {
-        if(!token.flags.world){
+    static onPreCreateToken(scene, token) {
+        if (!game.user.isGM) {
+            return
+        }
+        if (!token.flags) {
+            token.flags = {};
+        }
+        if (!token.flags.world) {
             token.flags.world = {};
         }
-        token.flags.world.dancingLights = game.settings.get("DancingLights", "defaultTokenLight");
-        DancingLights.forceReinit();
-        DancingLights.forceLayersUpdate();
+        if (!token.flags.world.dancingLights && game.settings.get("DancingLights", "defaultTokenLight") != {}) {
+            token.flags.world.dancingLights = game.settings.get("DancingLights", "defaultTokenLight");
+        }
     }
 
     static onUpdateToken(scene, token, changes, diff, sceneID) {
@@ -527,15 +559,16 @@ class DancingLights {
             // return if flag data was not changed in token. Prevents refreshing on token move for example.
             return;
         }
+        if (!game.user.isGM) {
+            if (token.flags.world && token.flags.world.dancingLights) {
 
-        if (token.flags.world && token.flags.world.dancingLights) {
-
-            if (token.flags.world.dancingLights.makeDefault) {
-                token.flags.world.dancingLights.makeDefault = false;
-                if (!token.flags.world.dancingLights.enabled) {
-                    game.settings.set("DancingLights", "defaultTokenLight", {});
-                } else {
-                    game.settings.set("DancingLights", "defaultTokenLight", token.flags.world.dancingLights);
+                if (token.flags.world.dancingLights.makeDefault) {
+                    token.flags.world.dancingLights.makeDefault = false;
+                    if (!token.flags.world.dancingLights.enabled) {
+                        game.settings.set("DancingLights", "defaultTokenLight", {});
+                    } else {
+                        game.settings.set("DancingLights", "defaultTokenLight", token.flags.world.dancingLights);
+                    }
                 }
             }
         }
@@ -575,9 +608,22 @@ class DancingLights {
                     let dimChild = canvas.sight.light.dim.getChildByName(k);
                     try {
                         if (advanceFrame) {
-                            var newAlpha = DancingLights.getAnimationFrame(childLight.id, childLight.data.flags.world.dancingLights.type, childLight.data.flags.world.dancingLights.minFade, childLight.data.flags.world.dancingLights.maxFade, childLight.data.flags.world.dancingLights.speed || 1, childLight.data.flags.world.dancingLights.sync || false, {
-                                blinkColorOnly: childLight.data.flags.world.dancingLights.blinkColorOnly
-                            });
+                            let newAlpha;
+                            let fireSyncedSuccess = false;
+                            try {
+                                if (childLight.data.flags.world.dancingLights.type === 'fire' && childLight.data.flags.world.dancingLights.sync && masterFireID && childLight.id != game.scenes.viewed.data.flags.world.dancingLights.masterFireID) {
+                                    newAlpha = canvas.lighting.get(masterFireID).alpha;
+                                    fireSyncedSuccess = true;
+                                }
+                            } catch (e) {
+                                //Ignore
+                            }
+
+                            if (!newAlpha) {
+                                newAlpha = DancingLights.getAnimationFrame(childLight.id, childLight.data.flags.world.dancingLights.type, childLight.data.flags.world.dancingLights.minFade, childLight.data.flags.world.dancingLights.maxFade, childLight.data.flags.world.dancingLights.speed || 1, childLight.data.flags.world.dancingLights.sync || false, {
+                                    blinkColorOnly: childLight.data.flags.world.dancingLights.blinkColorOnly
+                                });
+                            }
                             if (brightChild) {
                                 brightChild.alpha = newAlpha;
                             }
@@ -743,8 +789,16 @@ class DancingLights {
             Hooks.on("renderLightConfig", DancingLights.onRenderLightConfig);
             Hooks.on("renderTokenConfig", DancingLights.onRenderTokenConfig);
             Hooks.on("updateAmbientLight", DancingLights.onUpdateAmbientLight);
-            Hooks.on("createAmbientLight", DancingLights.onCreateAmbientLight);
-            Hooks.on("createToken", DancingLights.onCreateToken);
+            Hooks.on("preCreateAmbientLight", DancingLights.onPreCreateAmbientLight);
+            Hooks.on("createAmbientLight", () => {
+                DancingLights.forceReinit();
+                DancingLights.forceLayersUpdate();
+            });
+            Hooks.on("preCreateToken", DancingLights.onPreCreateToken);
+            Hooks.on("createToken", () => {
+                DancingLights.forceReinit();
+                DancingLights.forceLayersUpdate();
+            })
             Hooks.on("updateToken", DancingLights.onUpdateToken);
             Hooks.on("controlToken", DancingLights.forceReinit);
             Hooks.once("canvasReady", DancingLights.patchLighting);
