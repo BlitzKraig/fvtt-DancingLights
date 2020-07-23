@@ -205,7 +205,7 @@ class DancingLights {
             step: 0.05
         });
         let dimFade = DancingLights.getFormElement("Enable Dim Radius Fading", "The Dim light radius will fade with the bright. Note that 'Enable Dim/Color Animation' will also need to be enabled for a light to disappear when it reaches 0 opacity/fade", "checkbox", "dimFade", objectConfig.object.data.flags.world.dancingLights.dimFade || false, "Boolean");
-        let sync = DancingLights.getFormElement("Enable Sync", "Synchronize animations. Lights with the same animation type & speed with this checked will animate together", "checkbox", "sync", objectConfig.object.data.flags.world.dancingLights.sync || false, "Boolean");
+        let sync = DancingLights.getFormElement("Enable Sync", "Synchronize animations. Lights with the same animation type & speed with this checked will animate together. Note that the new fire animation does not yet support this.", "checkbox", "sync", objectConfig.object.data.flags.world.dancingLights.sync || false, "Boolean");
         let masterFire = DancingLights.getFormElement("Set As Master Fire", "All 'fire' type lights with 'Enable Sync' will be synchronised to this light. Note that this checkbox will disable itself once the light has updated, but the fire will be set as master. Deleting this light, or changing its type, will lose the sync.", "checkbox", "masterFire", false, "Boolean");
 
         // Bad name, but keeping so as not to break previous lighting for users
@@ -267,9 +267,9 @@ class DancingLights {
         ${danceType}<div id="typeOptions"><div id="fireOptions">${startColor}${endColor}${movementAmount}${dimMovement}</div>
         <div id="blinkOptions">${blinkColorOnly}</div>
         <div id="blinkFadeOptions">${blinkFadeColorEnabled}<div id="blinkFadeColorOptions">${blinkFadeColor1}${blinkFadeColor2}<div id="blinkFadeColorOptionsExtended">${blinkFadeColor3}</div></div></div>
-        ${minFade}${maxFade}${dimFade}${sync}
-        ${masterFire}
-        ${animateDim}${speed}</div>
+        ${minFade}${maxFade}${dimFade}${sync}`;
+        // TODO: ${masterFire}
+        data += `${animateDim}${speed}</div>
         ${cookieEnabled}<div id="cookieOptions">${cookiePath}${scaleCookie}${cookieScaleValue}</div></div>
         ${makeDefault}`;
         if (!isToken) {
@@ -525,18 +525,18 @@ class DancingLights {
                         game.settings.set("DancingLights", "defaultAmbientLight", light.flags.world.dancingLights);
                     }
                 }
-                if (light.flags.world.dancingLights.masterFire) {
-                    if (!game.scenes.viewed.data.flags) {
-                        game.scenes.viewed.data.flags = {};
-                    }
-                    if (!game.scenes.viewed.data.flags.world) {
-                        game.scenes.viewed.data.flags.world = {};
-                    }
-                    if (!game.scenes.viewed.data.flags.world.dancingLights) {
-                        game.scenes.viewed.data.flags.world.dancingLights = {};
-                    }
-                    game.scenes.viewed.data.flags.world.dancingLights.masterFireID = light.id;
-                }
+                // if (light.flags.world.dancingLights.masterFire) {
+                //     if (!game.scenes.viewed.data.flags) {
+                //         game.scenes.viewed.data.flags = {};
+                //     }
+                //     if (!game.scenes.viewed.data.flags.world) {
+                //         game.scenes.viewed.data.flags.world = {};
+                //     }
+                //     if (!game.scenes.viewed.data.flags.world.dancingLights) {
+                //         game.scenes.viewed.data.flags.world.dancingLights = {};
+                //     }
+                //     game.scenes.viewed.data.flags.world.dancingLights.masterFireID = light.id;
+                // }
 
                 if (light.flags.world.dancingLights.updateAll) {
                     light.flags.world.dancingLights.updateAll = false;
@@ -626,15 +626,15 @@ class DancingLights {
                     try {
                         if (advanceFrame) {
                             let newAlpha;
-                            let fireSyncedSuccess = false;
-                            try {
-                                if (childLight.data.flags.world.dancingLights.type === 'fire' && childLight.data.flags.world.dancingLights.sync && masterFireID && childLight.id != game.scenes.viewed.data.flags.world.dancingLights.masterFireID) {
-                                    newAlpha = canvas.lighting.get(masterFireID).alpha;
-                                    fireSyncedSuccess = true;
-                                }
-                            } catch (e) {
-                                //Ignore
-                            }
+                            // let fireSyncedSuccess = false;
+                            // try {
+                            //     if (childLight.data.flags.world.dancingLights.type === 'fire' && childLight.data.flags.world.dancingLights.sync && masterFireID && childLight.id != game.scenes.viewed.data.flags.world.dancingLights.masterFireID) {
+                            //         newAlpha = canvas.lighting.get(masterFireID).alpha;
+                            //         fireSyncedSuccess = true;
+                            //     }
+                            // } catch (e) {
+                            //     //Ignore
+                            // }
 
                             if (!newAlpha) {
                                 newAlpha = DancingLights.getAnimationFrame(childLight.id, childLight.data.flags.world.dancingLights.type, childLight.data.flags.world.dancingLights.minFade, childLight.data.flags.world.dancingLights.maxFade, childLight.data.flags.world.dancingLights.speed || 1, childLight.data.flags.world.dancingLights.sync || false, {
