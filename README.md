@@ -1,4 +1,4 @@
-# Dancing Lights
+# Dancing Lights v2
 
 ![DancingLights Release](https://github.com/BlitzKraig/fvtt-DancingLights/workflows/DancingLights%20Release/badge.svg)
 ![Latest Release Download Count](https://img.shields.io/github/downloads/BlitzKraig/fvtt-DancingLights/latest/dancinglights-release.zip)
@@ -8,9 +8,14 @@
 Better ambient lighting for Foundry VTT.
 Designed to avoid server-side light updates by directly modifying the lights PIXI elements client-side.
 
-Currently supports light blurring, fire-style animation with custom colors, blinking lights, fading lights and 'electrical fault' style lights.
+Supports token lights, light blurring, fire-style animation with custom colors, blinking lights, fading lights and 'electrical fault' style lights, custom light cookie images, and much more.
 
 All default light settings should work with Dancing Lights, except where specified (fire will disable chosen light color for example, using the 2 new fire colors instead)
+
+## V2 configuration
+
+A new config readme will be coming soon for the V2 changes. Most of the stuff is best discovered by playing around in a test scene.
+For tokens, make sure you have a dim or bright light emission set, then activate DL on the Vision page of token settings.
 
 ## Basic configuration
 
