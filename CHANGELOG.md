@@ -8,6 +8,7 @@
 * Added ability to set min/max fade
 * Added multiple options to animate the dim radius, including fade values, fire movement and blurring
 * Added functionality to set a default light template via checkbox in light & token settings, spawning all future lights with the same dancing light settings. (Ambient Lights and Tokens have separately stored defaults)
+* Added experimental Light Image settings. Apply an image texture to a light source. Supports PNG, JPG and WEBM (animatable!)
 * Added support for lib - ColorSettings (https://github.com/ardittristan/VTTColorSettings)
 
 ## Misc Changes
@@ -31,6 +32,7 @@
 * Light tagging system should mean no more guesstimating which light source to affect, fixing bugs where the wrong source was animated
 * Prevent frame advancing on every token/lighting update, causing choppy lighting on token move or day-night transition
 * Creating a new light no longer requires token movement to show if a player token is active
+* Prevented some code from triggering on non-gm accounts. This should stop permissions errors.
 
 # 1.5.1 - 2020/07/18
 

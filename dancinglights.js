@@ -126,6 +126,11 @@ class DancingLights {
                 element += standardColor();
             }
 
+        } else if (inputType === "image") {
+            element += `<button type="button" class="file-picker" data-type="imagevideo" data-target="flags.world.dancingLights.${name}" title="Browse Files" tabindex="-1">
+            <i class="fas fa-file-import fa-fw"></i>
+            </button>
+            <input class="image" type="text" name="flags.world.dancingLights.${name}" placeholder="path/image.png" value="${value}">`
         } else {
             element += `<input type="${inputType}" name="flags.world.dancingLights.${name}" value="${value}" data-dtype="${dType}" ${inputType=='checkbox' && value === true?'checked':''} ${inputType =='checkbox' && opt && opt.onClick?`onclick='${opt.onClick}'`:''} >`;
         }
@@ -137,8 +142,8 @@ class DancingLights {
     }
 
     static onRenderLightConfig(lightConfig, html, data) {
-        let element = html.find(".window-content")
-        DancingLights.addConfig(element, lightConfig, false);
+        DancingLights.addConfig(lightConfig.element, lightConfig, false);
+        lightConfig.activateListeners(lightConfig.element)
 
         //TODO: Improve style changes to attempt expansion on load.
         // $("#light-config").attr('style', function (i, style) {
@@ -148,9 +153,9 @@ class DancingLights {
     }
 
     static onRenderTokenConfig(tokenConfig, html, data) {
-        let element = html.find(".window-content").find(`[data-tab='vision']`)[1]
-        console.log(element);
+        let element = tokenConfig.element.find(`[data-tab='vision']`)[1]
         DancingLights.addConfig(element, tokenConfig, true);
+        tokenConfig.activateListeners(tokenConfig.element)
     }
 
     static displayExtendedOptions(display, divId) {
@@ -226,6 +231,16 @@ class DancingLights {
             max: 10,
             step: 1
         });
+        let cookieEnabled = DancingLights.getFormElement("Enable Light Image (EXPERIMENTAL)", "Apply an image to the light", "checkbox", "cookieEnabled", objectConfig.object.data.flags.world.dancingLights.cookieEnabled || false, "Boolean", {
+            onClick: 'DancingLights.displayExtendedOptions(this.checked, "cookieOptions");'
+        });
+        let cookiePath = DancingLights.getFormElement("Light Image", "The image to apply to the light. Note that white pixels will show the light color, colored pixels will show that color channel & transparent pixels will show as transparent (white light). PNG, JPG and WEBM supported (WEBMs will animate!)", "image", "cookiePath", objectConfig.object.data.flags.world.dancingLights.cookiePath || "modules/DancingLights/cookie.png", "String");
+        let scaleCookie = DancingLights.getFormElement("Scale Light Image", "Stretch the image to fit the light", "checkbox", "scaleCookie", objectConfig.object.data.flags.world.dancingLights.scaleCookie == undefined ? true : objectConfig.object.data.flags.world.dancingLights.scaleCookie, "Boolean");
+        let cookieScaleValue = DancingLights.getFormElement("Set Stretched Image Over/Underscale", "Increase/decrease the size of the stretched image. Useful if an image has too much whitespace surrounding it.", "range", "cookieScaleValue", typeof objectConfig.object.data.flags.world.dancingLights.cookieScaleValue !== 'undefined' ? objectConfig.object.data.flags.world.dancingLights.cookieScaleValue : 1, "Number", {
+            min: 0.1,
+            max: 3,
+            step: 0.1
+        });
         let makeDefault = DancingLights.getFormElement("Set As Default", "Spawn all future lights with these Dancing Lights settings. Tokens and Ambient Lights will have separate defaults. To revert the default to the normal light, uncheck 'Enable Dancing Lights' and check this. Note that this will 'uncheck' itself after you save the light, and must be re-checked if you want to update the defaults.", "checkbox", "makeDefault", false, "Boolean");
         let updateAll = DancingLights.getFormElement("Update All Lights", "IMPORTANT: This can take some time. Do not refresh your page until it is completed, or you risk losing data. Check this to automatically update all of the lights in the scene to match this one. This only updates the DancingLight options", "checkbox", "updateAll", false, "Boolean", {
             onClick: 'DancingLights.displayExtendedOptions(this.checked, "updateExtendedOptions");'
@@ -254,7 +269,8 @@ class DancingLights {
         <div id="blinkFadeOptions">${blinkFadeColorEnabled}<div id="blinkFadeColorOptions">${blinkFadeColor1}${blinkFadeColor2}<div id="blinkFadeColorOptionsExtended">${blinkFadeColor3}</div></div></div>
         ${minFade}${maxFade}${dimFade}${sync}
         ${masterFire}
-        ${animateDim}${speed}</div></div>
+        ${animateDim}${speed}</div>
+        ${cookieEnabled}<div id="cookieOptions">${cookiePath}${scaleCookie}${cookieScaleValue}</div></div>
         ${makeDefault}`;
         if (!isToken) {
             data += `${updateAll}<div id="updateExtendedOptions">${updateExtended}
@@ -272,6 +288,7 @@ class DancingLights {
         DancingLights.displayExtendedOptions(objectConfig.object.data.flags.world.dancingLights.type == 'blink' || objectConfig.object.data.flags.world.dancingLights.type == 'fade', "blinkFadeOptions");
         DancingLights.displayExtendedOptions(objectConfig.object.data.flags.world.dancingLights.blinkFadeColorEnabled && objectConfig.object.data.flags.world.dancingLights.blinkFadeColorEnabled !== 'none', "blinkFadeColorOptions");
         DancingLights.displayExtendedOptions(objectConfig.object.data.flags.world.dancingLights.blinkFadeColorEnabled && objectConfig.object.data.flags.world.dancingLights.blinkFadeColorEnabled == 'three', "blinkFadeColorOptionsExtended");
+        DancingLights.displayExtendedOptions(objectConfig.object.data.flags.world.dancingLights.cookieEnabled || false, "cookieOptions");
         DancingLights.displayExtendedOptions(false, 'updateExtendedOptions');
         DancingLights.displayExtendedOptions(false, 'granularExtendedOptions');
     }
@@ -559,7 +576,7 @@ class DancingLights {
             // return if flag data was not changed in token. Prevents refreshing on token move for example.
             return;
         }
-        if (!game.user.isGM) {
+        if (game.user.isGM) {
             if (token.flags.world && token.flags.world.dancingLights) {
 
                 if (token.flags.world.dancingLights.makeDefault) {
@@ -671,29 +688,92 @@ class DancingLights {
                 if (childLight && childLight.data.flags.world.dancingLights && childLight.data.flags.world.dancingLights.enabled) {
                     let dancingLightOptions = childLight.data.flags.world.dancingLights;
                     let childID = childLight.id;
+
+                    // Cookie options
+                    let texture;
+                    let matrix;
+                    if (dancingLightOptions.cookieEnabled && dancingLightOptions.cookiePath) {
+                        texture = PIXI.Texture.from(dancingLightOptions.cookiePath);
+                        texture.baseTexture.source.loop = true
+                        let isToken = k.split('.')[0] === 'Token';
+                        if (dancingLightOptions.scaleCookie === undefined || dancingLightOptions.scaleCookie) {
+                            let xScale = Math.max(isToken ? childLight.dimLightRadius : childLight.dimRadius, isToken ? childLight.brightLightRadius : childLight.brightRadius) * 2 / texture.width; //+ (Math.random() * 1.01);
+                            let yScale = Math.max(isToken ? childLight.dimLightRadius : childLight.dimRadius, isToken ? childLight.brightLightRadius : childLight.brightRadius) * 2 / texture.height;
+                            let newXScale = dancingLightOptions.cookieScaleValue || 1;
+                            let newYScale = dancingLightOptions.cookieScaleValue || 1;
+                            if (isToken) {
+                                matrix = new PIXI.Matrix().scale(xScale, yScale)
+                                    .scale(newXScale, newYScale)
+                                    .translate(
+                                        childLight.getSightOrigin().x - Math.max(childLight.dimLightRadius, childLight.brightLightRadius),
+                                        childLight.getSightOrigin().y - Math.max(childLight.dimLightRadius, childLight.brightLightRadius))
+                                    .translate(-Math.max(childLight.dimLightRadius, childLight.brightLightRadius) * (newXScale - 1), -Math.max(childLight.dimLightRadius, childLight.brightLightRadius) * (newYScale - 1));
+                               } else {
+                                matrix = new PIXI.Matrix().scale(xScale, yScale)
+                                    .scale(newXScale, newYScale)
+                                    .translate(childLight.x - Math.max(childLight.dimRadius, childLight.brightRadius),
+                                        childLight.y - Math.max(childLight.dimRadius, childLight.brightRadius))
+                                    .translate(-Math.max(childLight.dimRadius, childLight.brightRadius) * (newXScale - 1), -Math.max(childLight.dimRadius, childLight.brightRadius) * (newYScale - 1));;
+                            }
+                        } else {
+                            if (isToken) {
+                                matrix = new PIXI.Matrix().translate(childLight.getSightOrigin().x - Math.max(childLight.dimLightRadius, childLight.brightLightRadius), childLight.getSightOrigin().y - Math.max(childLight.dimLightRadius, childLight.brightLightRadius));
+                            } else {
+                                matrix = new PIXI.Matrix().translate(childLight.x - Math.max(childLight.dimRadius, childLight.brightRadius), childLight.y - Math.max(childLight.dimRadius, childLight.brightRadius));
+                            }
+                        }
+                    }
                     if (dancingLightOptions.type === 'fire' || dancingLightOptions.type === 'legacyfire') {
-                        canvas.lighting.lighting.lights.beginFill(DancingLights.getColorFromAlpha(childID, [dancingLightOptions.startColor || DancingLights.Constants.defaultFireColor, dancingLightOptions.endColor || DancingLights.Constants.defaultFireColor], dancingLightOptions.minFade, dancingLightOptions.maxFade), dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
+                        if (dancingLightOptions.cookieEnabled && dancingLightOptions.cookiePath) {
+                            canvas.lighting.lighting.lights.beginTextureFill(texture, DancingLights.getColorFromAlpha(childID, [dancingLightOptions.startColor || DancingLights.Constants.defaultFireColor, dancingLightOptions.endColor || DancingLights.Constants.defaultFireColor], dancingLightOptions.minFade, dancingLightOptions.maxFade), dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha, matrix).drawPolygon(s.fov).endFill();
+                        } else {
+                            canvas.lighting.lighting.lights.beginFill(DancingLights.getColorFromAlpha(childID, [dancingLightOptions.startColor || DancingLights.Constants.defaultFireColor, dancingLightOptions.endColor || DancingLights.Constants.defaultFireColor], dancingLightOptions.minFade, dancingLightOptions.maxFade), dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
+                        }
                     } else if (dancingLightOptions.type === 'fade' && dancingLightOptions.blinkFadeColorEnabled !== 'none') {
                         if (dancingLightOptions.blinkFadeColorEnabled == 'two') {
-                            canvas.lighting.lighting.lights.beginFill(DancingLights.getColorFromAlpha(childID, [dancingLightOptions.blinkFadeColor1 || '#ff0000', dancingLightOptions.blinkFadeColor2 || '#00ff00'], dancingLightOptions.minFade, dancingLightOptions.maxFade), dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
+                            if (dancingLightOptions.cookieEnabled && dancingLightOptions.cookiePath) {
+                                canvas.lighting.lighting.lights.beginTextureFill(texture, DancingLights.getColorFromAlpha(childID, [dancingLightOptions.blinkFadeColor1 || '#ff0000', dancingLightOptions.blinkFadeColor2 || '#00ff00'], dancingLightOptions.minFade, dancingLightOptions.maxFade), dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha, matrix).drawPolygon(s.fov).endFill();
+                            } else {
+                                canvas.lighting.lighting.lights.beginFill(DancingLights.getColorFromAlpha(childID, [dancingLightOptions.blinkFadeColor1 || '#ff0000', dancingLightOptions.blinkFadeColor2 || '#00ff00'], dancingLightOptions.minFade, dancingLightOptions.maxFade), dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
+                            }
                         } else if (dancingLightOptions.blinkFadeColorEnabled == 'three') {
-                            canvas.lighting.lighting.lights.beginFill(DancingLights.getColorFromAlpha(childID, [dancingLightOptions.blinkFadeColor1 || '#ff0000', dancingLightOptions.blinkFadeColor2 || '#00ff00', dancingLightOptions.blinkFadeColor3 || '#0000ff'], dancingLightOptions.minFade, dancingLightOptions.maxFade), dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
+                            if (dancingLightOptions.cookieEnabled && dancingLightOptions.cookiePath) {
+                                canvas.lighting.lighting.lights.beginTextureFill(texture, DancingLights.getColorFromAlpha(childID, [dancingLightOptions.blinkFadeColor1 || '#ff0000', dancingLightOptions.blinkFadeColor2 || '#00ff00', dancingLightOptions.blinkFadeColor3 || '#0000ff'], dancingLightOptions.minFade, dancingLightOptions.maxFade), dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha, matrix).drawPolygon(s.fov).endFill();
+                            } else {
+                                canvas.lighting.lighting.lights.beginFill(DancingLights.getColorFromAlpha(childID, [dancingLightOptions.blinkFadeColor1 || '#ff0000', dancingLightOptions.blinkFadeColor2 || '#00ff00', dancingLightOptions.blinkFadeColor3 || '#0000ff'], dancingLightOptions.minFade, dancingLightOptions.maxFade), dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
+                            }
                         }
                     } else if (dancingLightOptions.type === 'blink' && dancingLightOptions.blinkFadeColorEnabled !== 'none') {
                         if (dancingLightOptions.blinkFadeColorEnabled == 'two') {
                             if (dancingLightOptions.blinkColorOnly) {
-                                canvas.lighting.lighting.lights.beginFill(DancingLights.getBlinkColor(childID, [dancingLightOptions.blinkFadeColor1 || '#ff0000', dancingLightOptions.blinkFadeColor2 || '#00ff00']) || s.color, dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
+                                if (dancingLightOptions.cookieEnabled && dancingLightOptions.cookiePath) {
+                                    canvas.lighting.lighting.lights.beginTextureFill(texture, DancingLights.getBlinkColor(childID, [dancingLightOptions.blinkFadeColor1 || '#ff0000', dancingLightOptions.blinkFadeColor2 || '#00ff00']) || s.color, dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha, matrix).drawPolygon(s.fov).endFill();
+                                } else {
+                                    canvas.lighting.lighting.lights.beginFill(DancingLights.getBlinkColor(childID, [dancingLightOptions.blinkFadeColor1 || '#ff0000', dancingLightOptions.blinkFadeColor2 || '#00ff00']) || s.color, dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
+                                }
                             } else {
-                                canvas.lighting.lighting.lights.beginFill(DancingLights.getColorFromAlpha(childID, [dancingLightOptions.blinkFadeColor1 || '#ff0000', dancingLightOptions.blinkFadeColor2 || '#00ff00'], dancingLightOptions.minFade, dancingLightOptions.maxFade) || s.color, dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
+                                if (dancingLightOptions.cookieEnabled && dancingLightOptions.cookiePath) {
+                                    canvas.lighting.lighting.lights.beginTextureFill(texture, DancingLights.getColorFromAlpha(childID, [dancingLightOptions.blinkFadeColor1 || '#ff0000', dancingLightOptions.blinkFadeColor2 || '#00ff00'], dancingLightOptions.minFade, dancingLightOptions.maxFade) || s.color, dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha, matrix).drawPolygon(s.fov).endFill();
+                                } else {
+                                    canvas.lighting.lighting.lights.beginFill(DancingLights.getColorFromAlpha(childID, [dancingLightOptions.blinkFadeColor1 || '#ff0000', dancingLightOptions.blinkFadeColor2 || '#00ff00'], dancingLightOptions.minFade, dancingLightOptions.maxFade) || s.color, dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
+                                }
                             }
                         } else if (dancingLightOptions.blinkFadeColorEnabled == 'three') {
-                            canvas.lighting.lighting.lights.beginFill(DancingLights.getBlinkColor(childID, [dancingLightOptions.blinkFadeColor1 || '#ff0000', dancingLightOptions.blinkFadeColor2 || '#00ff00', dancingLightOptions.blinkFadeColor3 || '#0000ff']) || s.color, dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
+                            if (dancingLightOptions.cookieEnabled && dancingLightOptions.cookiePath) {
+                                canvas.lighting.lighting.lights.beginTextureFill(texture, DancingLights.getBlinkColor(childID, [dancingLightOptions.blinkFadeColor1 || '#ff0000', dancingLightOptions.blinkFadeColor2 || '#00ff00', dancingLightOptions.blinkFadeColor3 || '#0000ff']) || s.color, dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha, matrix).drawPolygon(s.fov).endFill();
+                            } else {
+                                canvas.lighting.lighting.lights.beginFill(DancingLights.getBlinkColor(childID, [dancingLightOptions.blinkFadeColor1 || '#ff0000', dancingLightOptions.blinkFadeColor2 || '#00ff00', dancingLightOptions.blinkFadeColor3 || '#0000ff']) || s.color, dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
+                            }
                         }
                     } else {
-                        canvas.lighting.lighting.lights.beginFill(s.color, dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
+                        if (dancingLightOptions.cookieEnabled && dancingLightOptions.cookiePath) {
+                            canvas.lighting.lighting.lights.beginTextureFill(texture, s.color, dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha, matrix).drawPolygon(s.fov).endFill();
+                        } else {
+                            canvas.lighting.lighting.lights.beginFill(s.color, dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
+                        }
                     }
                 } else {
-                    canvas.lighting.lighting.lights.beginFill(s.color, s.alpha).drawPolygon(s.fov).endFill();
+                     canvas.lighting.lighting.lights.beginFill(s.color, s.alpha).drawPolygon(s.fov).endFill();
                 }
             }
         }
