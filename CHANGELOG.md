@@ -1,3 +1,8 @@
+# 2.0.4 - 2020/07/23
+
+* Fixed an issue where lights were not visible by the GM with no token
+* Added support for DarkerVisionFor5e
+
 # 2.0.1 - 2.0.3
 
 * Release issue hotfixes

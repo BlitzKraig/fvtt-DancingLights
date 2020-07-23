@@ -597,10 +597,12 @@ class DancingLights {
     /* Token Config End */
 
     static onTick() {
-        const c = canvas.lighting.lighting.lights;
-        try {
-            c.clear();
-        } catch (e) {}
+        if (canvas.sight.visible) {
+            const c = canvas.lighting.lighting.lights;
+            try {
+                c.clear();
+            } catch (e) {}
+        }
         if (canvas.sight.light.bright.children.length > 0) {
             DancingLights.drawLighting(true);
         }
@@ -708,7 +710,7 @@ class DancingLights {
                                         childLight.getSightOrigin().x - Math.max(childLight.dimLightRadius, childLight.brightLightRadius),
                                         childLight.getSightOrigin().y - Math.max(childLight.dimLightRadius, childLight.brightLightRadius))
                                     .translate(-Math.max(childLight.dimLightRadius, childLight.brightLightRadius) * (newXScale - 1), -Math.max(childLight.dimLightRadius, childLight.brightLightRadius) * (newYScale - 1));
-                               } else {
+                            } else {
                                 matrix = new PIXI.Matrix().scale(xScale, yScale)
                                     .scale(newXScale, newYScale)
                                     .translate(childLight.x - Math.max(childLight.dimRadius, childLight.brightRadius),
@@ -773,7 +775,7 @@ class DancingLights {
                         }
                     }
                 } else {
-                     canvas.lighting.lighting.lights.beginFill(s.color, s.alpha).drawPolygon(s.fov).endFill();
+                    canvas.lighting.lighting.lights.beginFill(s.color, s.alpha).drawPolygon(s.fov).endFill();
                 }
             }
         }
@@ -1138,6 +1140,11 @@ update() {
                 let ns = performance.now() - pNow;
                 console.log(`Rendered Sight Layer update in ${ns}ms`);
             }
+
+            // DarkerVision support
+            try {
+                DarkerVisionFor5e.betterDimVision(this.sources);
+            } catch (e) {}
         }
 
 
