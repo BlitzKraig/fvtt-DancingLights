@@ -2,7 +2,7 @@
   "name": "DancingLights",
   "title": "Dancing Lights",
   "description": "The Ambient Light & Token Light toolkit to make your scenes pop!",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "author": "Blitzkraig",
   "scripts": ["./dancinglights.js", "./dependencies/chroma.min.js"],
   "styles": [],
@@ -11,5 +11,5 @@
   "compatibleCoreVersion": "0.7.0",
   "url": "https://github.com/BlitzKraig/fvtt-DancingLights",
   "manifest": "https://raw.githubusercontent.com/BlitzKraig/fvtt-DancingLights/master/module.json",
-  "download": "https://github.com/BlitzKraig/fvtt-DancingLights/archive/master.zip"
+  "download": "https://github.com/BlitzKraig/fvtt-DancingLights/releases/download/latest/dancinglights-release.zip"
 }
