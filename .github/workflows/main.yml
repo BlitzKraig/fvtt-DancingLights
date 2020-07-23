@@ -11,7 +11,7 @@ jobs:
       shell: bash
       id: get-version
       run: echo "::set-output name=version::$(node ./.github/workflows/get-version.js)"
-    - run: zip -r ./dancinglights-release.zip module.json dancinglights.js dependencies/
+    - run: zip -r ./dancinglights-release.zip module.json dancinglights.js ColorTest.png dependencies/
     - name: Create Release
       id: create_versioned_release
       uses: ncipollo/release-action@v1
