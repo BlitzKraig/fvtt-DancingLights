@@ -23,16 +23,23 @@
 * Clarified some settings
 
 ## Performance improvements
+
 * Object for tracking the last alpha is now cleared regularly
 * Massively reduced loop count with the tagging system
 
 ## Bugfixes
+
 * Negative-radius lights no longer cause all dancing lights to fail
 * Lights with opacity 0 no longer revert to the default opacity (Seen as a quick flash of color when using a 'fade' light with dim/color animation enabled - This is a Foundry bug, and can be seen without DancingLights installed)
 * Light tagging system should mean no more guesstimating which light source to affect, fixing bugs where the wrong source was animated
 * Prevent frame advancing on every token/lighting update, causing choppy lighting on token move or day-night transition
 * Creating a new light no longer requires token movement to show if a player token is active
 * Prevented some code from triggering on non-gm accounts. This should stop permissions errors.
+
+## Known issues/limitations
+
+* The new Fire type does not yet obey Sync. This will be added later.
+* Setting the new Light Image/Cookie scale to < 1 can cause repetitions of the image
 
 # 1.5.1 - 2020/07/18
 
