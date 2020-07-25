@@ -153,9 +153,10 @@ class DancingLights {
     }
 
     static onRenderTokenConfig(tokenConfig, html, data) {
-        let element = tokenConfig.element.find(`[data-tab='vision']`)[1]
+        let element = tokenConfig.element.find(`[data-tab='vision']`)[1];
+        $(tokenConfig.element).find('.window-content').css('overflow-y', 'scroll');
         DancingLights.addConfig(element, tokenConfig, true);
-        tokenConfig.activateListeners(tokenConfig.element)
+        tokenConfig.activateListeners(tokenConfig.element);
     }
 
     static displayExtendedOptions(display, divId) {

@@ -1,3 +1,7 @@
+# 2.0.5 - 2020/07/25
+
+* Added support for Ernie's Modern UI (https://github.com/ernieayala/ernies-modern-layout)
+
 # 2.0.4 - 2020/07/23
 
 * Fixed an issue where lights were not visible by the GM with no token
