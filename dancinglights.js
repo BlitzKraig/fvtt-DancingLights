@@ -278,7 +278,7 @@ class DancingLights {
         <div id="granularExtendedOptions">${updateExtendedHeader}${t}${x}${y}${rotation}${dim}${bright}${angle}${tintColor}${tintAlpha}${darknessThreshold}</div></div>`;
         }
 
-        isToken ? $(element).append(data) : $('button[name ="submit"]').before(data);
+        isToken ? $(element).append(data) : $(element).find('button[name ="submit"]').before(data);
 
         DancingLights.displayExtendedOptions(objectConfig.object.data.flags.world.dancingLights.enabled || false, "dancingLightsOptions");
         DancingLights.displayExtendedOptions(objectConfig.object.data.flags.world.dancingLights.blurEnabled || false, "blurOptions");

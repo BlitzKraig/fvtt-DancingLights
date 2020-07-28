@@ -1,3 +1,8 @@
+# 2.0.6 - 2020/07/28
+
+* Changed module title
+* Checked for correct element before adding light config UI
+
 # 2.0.5 - 2020/07/25
 
 * Added support for Ernie's Modern UI (https://github.com/ernieayala/ernies-modern-layout)
