@@ -1,10 +1,11 @@
 # 2.1.0 - 2020/07/30
 
 * Added multiple light selection support (Thanks to KayeelGee for his help with compatibility on this - See https://github.com/KayelGee/select-tool-everywhere for further multi-select options)
-* New macros available:
+* New macros available! :
     * Toggle selected lights on/off
     * Copy light settings
-    * Paste copied settings to selected lights
+    * Paste copied settings to all selected lights
+* Updated main hooks for updating tokens/lights to 'pre'
 
 # 2.0.6 - 2020/07/28
 

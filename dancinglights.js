@@ -172,6 +172,7 @@ class DancingLights {
         }
 
         let dancingLightsHeader = `<h2>Dancing Lights config</h2>`;
+        let lightHidden = DancingLights.getFormElement("Turn Light Off", "Turn off this light. 'Enable Dancing Lights' does not need to be checked to use this. Check the compendiums for a macro.", "checkbox", "hidden", objectConfig.object.data.flags.world.dancingLights.hidden || false, "Boolean");
         let dancingLightsEnabled = DancingLights.getFormElement("Enable Dancing Lights", "Enable/disable effects on this light", "checkbox", "enabled", objectConfig.object.data.flags.world.dancingLights.enabled || false, "Boolean", {
             onClick: 'DancingLights.displayExtendedOptions(this.checked, "dancingLightsOptions");'
         });
@@ -268,7 +269,7 @@ class DancingLights {
         let tintAlpha = DancingLights.getFormElement("Light Opacity", "", "checkbox", "updateGranular.tintAlpha", true, "Boolean");
         let darknessThreshold = DancingLights.getFormElement("Darkness Threshold", "", "checkbox", "updateGranular.darknessThreshold", true, "Boolean");
 
-        let data = `${dancingLightsHeader}${dancingLightsEnabled}<div id="dancingLightsOptions">
+        let data = `${dancingLightsHeader}${lightHidden}${dancingLightsEnabled}<div id="dancingLightsOptions">
         ${blurEnabled}<div id="blurOptions">${blurAmount}</div>
         ${dimBlurEnabled}<div id="dimBlurOptions">${dimBlurAmount}</div>
         ${danceType}<div id="typeOptions"><div id="fireOptions">${startColor}${endColor}${movementAmount}${dimMovement}</div>
@@ -908,6 +909,12 @@ static onInit() {
         default: {}
     })
     game.settings.register("DancingLights", "defaultTokenLight", {
+        name: "Default Token Light Settings",
+        scope: "world",
+        config: false,
+        default: {}
+    })
+    game.settings.register("DancingLights", "savedLightSettings", {
         name: "Default Token Light Settings",
         scope: "world",
         config: false,

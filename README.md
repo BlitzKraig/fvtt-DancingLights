@@ -17,6 +17,8 @@ All default light settings should work with Dancing Lights, except where specifi
 A new config readme will be coming soon for the V2 changes. Most of the stuff is best discovered by playing around in a test scene.
 For tokens, make sure you have a dim or bright light emission set, then activate DL on the Vision page of token settings.
 
+Macros are now available in your compendiums! Turn your lights off & on, or copy & paste settings!
+
 ## Basic configuration
 
 1. Create or update a light
@@ -113,3 +115,10 @@ This module is open for feedback and suggestions! I would love to improve it and
 For bugs/feedback, create an issue on GitHub, or contact me on Discord at Blitz#6797
 
 ## [Release Notes](./CHANGELOG.md)
+
+## Icons Attribution
+
+Game icons found in /icons were provided by https://game-icons.net/ under https://creativecommons.org/licenses/by/3.0/
+
+The 'torch-off.png', 'save.png' and 'load.png' icons have been color-modified from their originals.
+

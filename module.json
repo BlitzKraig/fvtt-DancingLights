@@ -6,7 +6,13 @@
   "author": "Blitzkraig",
   "scripts": ["./dancinglights.js", "./dependencies/chroma.min.js"],
   "styles": [],
-  "packs": [],
+  "packs": [{
+    "name": "dancinglights-macros",
+    "label": "Dancing Lights - Macros",
+    "path": "packs/dancinglights-macros.db",
+    "module": "DancingLights",
+    "entity": "Macro"
+  }],
   "minimumCoreVersion": "0.6.2",
   "compatibleCoreVersion": "0.7.0",
   "url": "https://github.com/BlitzKraig/fvtt-DancingLights",
