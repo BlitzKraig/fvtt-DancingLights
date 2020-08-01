@@ -19,7 +19,130 @@ class DancingLights {
         },
         scale: (num, in_min, in_max, out_min, out_max) => {
             return (num - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+        },
+        fillArray: (length, fillValue) => {
+            var arr = [];
+            while (length--) {
+                arr[length] = fillValue;
+            }
+            return arr;
         }
+    }
+
+    static Macros = {
+        /* beautify ignore:start */
+        copy: ()=>{
+            let dancingLightsOptions;
+            if (canvas.lighting.controlled.length === 1) {
+                dancingLightsOptions = canvas.lighting.controlled[0].data.flags.world.dancingLights;
+                ui.notifications.notify("Ambient Light settings copied");
+            } else if (canvas.tokens.controlled.length === 1) {
+                ui.notifications.notify("Token Light settings copied");
+                dancingLightsOptions = canvas.tokens.controlled[0].data.flags.world.dancingLights;
+            } else {
+                ui.notifications.warn("Please select a single light or token");
+                return;
+            }
+            game.settings.set("DancingLights", "savedLightSettings", dancingLightsOptions);
+        },
+        paste: ()=>{
+            let dancingLightsOptions;
+            dancingLightsOptions = game.settings.get("DancingLights", "savedLightSettings");
+            if (!dancingLightsOptions) {
+                ui.notifications.warn("No settings copied. Please use the Copy macro first.");
+            }
+            if(dancingLightsOptions.enabled == undefined){
+            // if(Object.keys(dancingLightsOptions).length == 0){
+                dancingLightsOptions.enabled = false;
+            }
+            if (canvas.lighting.controlled.length > 0) {
+                let lightsArray = []
+                for (let light of canvas.lighting.controlled) {
+                    light.data.flags.world.dancingLights = mergeObject(light.data.flags.world.dancingLights, dancingLightsOptions);
+                    lightsArray.push(light.data);
+                }
+                canvas.lighting.updateMany(lightsArray, {
+                    diff: false
+                });
+            } else if (canvas.tokens.controlled.length > 0) {
+                let tokensArray = [];
+                for (let token of canvas.tokens.controlled) {
+                    token.data.flags.world.dancingLights = mergeObject(token.data.flags.world.dancingLights, dancingLightsOptions);
+                    tokensArray.push(token.data);
+                }
+                canvas.tokens.updateMany(tokensArray, {
+                    diff: false
+                });
+            } else {
+                ui.notifications.warn("Please select 1 or more lights or tokens");
+                return;
+            }
+            game.settings.set("DancingLights", "savedLightSettings", dancingLightsOptions);
+        
+        },
+        on: ()=>{
+            let lightsArray = []
+            let tokensArray = []
+            for (let light of canvas.lighting.controlled) {
+                light.data.flags.world.dancingLights.hidden = false;
+                lightsArray.push(light.data);
+            }
+            
+            for (let token of canvas.tokens.controlled) {
+                token.data.flags.world.dancingLights.hidden = false;
+                tokensArray.push(token.data);
+            }
+            
+            canvas.lighting.updateMany(lightsArray, {
+                diff: false
+            });
+            canvas.tokens.updateMany(tokensArray, {
+                diff: false
+            });
+        },
+        off: ()=>{
+            let lightsArray = []
+            let tokensArray = []
+            for (let light of canvas.lighting.controlled) {
+                light.data.flags.world.dancingLights.hidden = true;
+                lightsArray.push(light.data);
+            }
+            
+            for (let token of canvas.tokens.controlled) {
+                token.data.flags.world.dancingLights.hidden = true;
+                tokensArray.push(token.data);
+            }
+            
+            canvas.lighting.updateMany(lightsArray, {
+                diff: false
+            });
+            canvas.tokens.updateMany(tokensArray, {
+                diff: false
+            });
+        },
+        toggle: () => {
+            let lightsArray = [];
+            let tokensArray = [];
+            for (let light of canvas.lighting.controlled) {
+                let hide = light.data.flags.world.dancingLights.hidden ?? false;
+                light.data.flags.world.dancingLights.hidden = !hide;
+                lightsArray.push(light.data);
+            }
+
+            for (let token of canvas.tokens.controlled) {
+                let hide = token?.data?.flags?.world?.dancingLights?.hidden ?? false;
+                token.data.flags.world.dancingLights.hidden = !hide;
+                tokensArray.push(token.data);
+            }
+
+            canvas.lighting.updateMany(lightsArray, {
+                diff: false
+            });
+            canvas.tokens.updateMany(tokensArray, {
+                diff: false
+            });
+        }
+        /* beautify ignore:end */
     }
 
     static danceTimerTick = 80;
@@ -530,7 +653,7 @@ class DancingLights {
         if (changes?.flags?.world?.dancingLights) {
             if (changes.flags.world.dancingLights.makeDefault) {
                 changes.flags.world.dancingLights.makeDefault = false;
-                if (changes.flags.world.dancingLights.enabled == false || !light?.flags?.world?.dancingLights?.enabled) {
+                if (changes.flags.world.dancingLights.enabled == false || light?.flags?.world?.dancingLights?.enabled == false) {
                     game.settings.set("DancingLights", "defaultAmbientLight", {});
                 } else {
                     game.settings.set("DancingLights", "defaultAmbientLight", mergeObject(light.flags.world.dancingLights, changes.flags.world.dancingLights));
@@ -600,7 +723,7 @@ static onPreUpdateToken(scene, token, changes, diff, sceneID) {
 
     if (changes.flags.world.dancingLights.makeDefault) {
         changes.flags.world.dancingLights.makeDefault = false;
-        if (changes.flags.world.dancingLights.enabled == false || !token?.flags?.world?.dancingLights?.enabled) {
+        if (changes.flags.world.dancingLights.enabled == false || token?.flags?.world?.dancingLights?.enabled == false) {
             game.settings.set("DancingLights", "defaultTokenLight", {});
         } else {
             game.settings.set("DancingLights", "defaultTokenLight", mergeObject(token.flags.world.dancingLights, changes.flags.world.dancingLights));
@@ -820,8 +943,9 @@ static drawLighting(advanceFrame) {
                         canvas.lighting.lighting.lights.beginFill(s.color, dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
                     }
                 }
-            } else if (childLight.data.flags.world.dancingLights.hidden) {
-                canvas.lighting.lighting.lights.beginFill(s.color, 0).drawPolygon(s.fov).endFill();
+            } else if (childLight && childLight.data.flags.world.dancingLights.hidden) {
+                let hiddenFov = {"points":[0,0],"type":0,"closeStroke":true}
+                canvas.lighting.lighting.lights.beginFill(s.color, 0).drawPolygon(hiddenFov).endFill();
             } else {
                 canvas.lighting.lighting.lights.beginFill(s.color, s.alpha).drawPolygon(s.fov).endFill();
             }
@@ -900,6 +1024,17 @@ static onInit() {
         onChange: value => {
             canvas.draw();
             // window.location.reload();
+        }
+    })
+    game.settings.register("DancingLights", "updateMask", {
+        name: "Prevent Light Bleed - EXPERIMENTAL",
+        hint: "World setting. The GM can enable this to update the light mask to try and prevent 'light bleeding' when a blurred light hits a wall. Testing so far indicates this is safe, but if you see any weird stuff happening with lights, try disabling this - and contact me on Discord if enabling this causes issues @Blitz#6797",
+        scope: "world",
+        config: true,
+        default: false,
+        type: Boolean,
+        onChange: value => {
+            window.location.reload();
         }
     })
     game.settings.register("DancingLights", "defaultAmbientLight", {
@@ -1031,9 +1166,9 @@ static patchLighting() {
                 if (dancingLightOptions && dancingLightOptions.enabled) {
                     if (dancingLightOptions.blurEnabled) {
                         if (dancingLightOptions.blurAmount == 0) {
-                            source.filters = [];
+                            source.light.filters = [];
                         } else {
-                            source.filters = [new PIXI.filters.BlurFilter(dancingLightOptions.blurAmount)]
+                            source.light.filters = [new PIXI.filters.BlurFilter(dancingLightOptions.blurAmount)]
                         }
                         // Keeping in case we want to add this. Almost looks good.
                         // source.filters.push(new PIXI.filters.GlitchFilter({slices:30, offset: 5, direction: 45, average: true}));
@@ -1053,9 +1188,9 @@ static patchLighting() {
                 if (dancingLightOptions && dancingLightOptions.enabled) {
                     if (dancingLightOptions.dimBlurEnabled) {
                         if (dancingLightOptions.dimBlurAmount == 0) {
-                            source.filters = [];
+                            source.light.filters = [];
                         } else {
-                            source.filters = [new PIXI.filters.BlurFilter(dancingLightOptions.dimBlurAmount)]
+                            source.light.filters = [new PIXI.filters.BlurFilter(dancingLightOptions.dimBlurAmount)]
                         }
                     }
                     if (dancingLightOptions.dimFade) {
@@ -1069,6 +1204,9 @@ static patchLighting() {
                     }
                 }
             }
+        }
+        if(game.settings.get("DancingLights", "updateMask") === true) {
+            source.mask = source.fov;
         }
         /* Monkeypatch block end */
         return source;

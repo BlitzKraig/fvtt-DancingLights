@@ -1,3 +1,14 @@
+# 2.1.1 - 2020/08/01
+
+* Updated macros to call internal functions, allowing them to always keep updated when the module updates -
+    * IMPORTANT! If you have pulled the macros from 2.1.0 into your world, remove them and replace them with the new versions. After this update, you shouldn't need to do this again
+* Updated copy/paste macros to prevent accidental GM light grouping
+* Fixed copy/paste to allow copying lights with Dancing Lights disabled
+* Added experimental light-bleed fix. This can be enabled in module settings by the GM
+* Updated hidden/off lights to no longer reveal FOW or tokens, thus acting truly 'off'
+* Fixed 'Set as default' not working when enabled while enabling Dancing Lights at the same time
+* Fixed an issue where moving NPCs with lights would sometimes cause a players lighting to break
+
 # 2.1.0 - 2020/07/30
 
 * Added multiple light selection support (Thanks to KayeelGee for his help with compatibility on this - See https://github.com/KayelGee/select-tool-everywhere for further multi-select options)
