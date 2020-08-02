@@ -93,12 +93,17 @@ class DancingLights {
                 tokensArray.push(token.data);
             }
             
-            canvas.lighting.updateMany(lightsArray, {
-                diff: false
-            });
-            canvas.tokens.updateMany(tokensArray, {
-                diff: false
-            });
+            if(lightsArray.length > 0){
+                canvas.lighting.updateMany(lightsArray, {
+                    diff: false
+                });
+            } else if (tokensArray.length > 0){
+                canvas.tokens.updateMany(tokensArray, {
+                    diff: false
+                });
+            } else {
+                ui.notifications.warn("No lights or tokens selected");
+            }
         },
         off: ()=>{
             let lightsArray = []
@@ -113,12 +118,17 @@ class DancingLights {
                 tokensArray.push(token.data);
             }
             
-            canvas.lighting.updateMany(lightsArray, {
-                diff: false
-            });
-            canvas.tokens.updateMany(tokensArray, {
-                diff: false
-            });
+            if(lightsArray.length > 0){
+                canvas.lighting.updateMany(lightsArray, {
+                    diff: false
+                });
+            } else if (tokensArray.length > 0){
+                canvas.tokens.updateMany(tokensArray, {
+                    diff: false
+                });
+            } else {
+                ui.notifications.warn("No lights or tokens selected");
+            }
         },
         toggle: () => {
             let lightsArray = [];
@@ -135,12 +145,17 @@ class DancingLights {
                 tokensArray.push(token.data);
             }
 
-            canvas.lighting.updateMany(lightsArray, {
-                diff: false
-            });
-            canvas.tokens.updateMany(tokensArray, {
-                diff: false
-            });
+            if(lightsArray.length > 0){
+                canvas.lighting.updateMany(lightsArray, {
+                    diff: false
+                });
+            } else if (tokensArray.length > 0){
+                canvas.tokens.updateMany(tokensArray, {
+                    diff: false
+                });
+            } else {
+                ui.notifications.warn("No lights or tokens selected");
+            }
         }
         /* beautify ignore:end */
     }

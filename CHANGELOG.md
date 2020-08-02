@@ -1,3 +1,12 @@
+# 2.1.2 - 2020/08/02
+
+* Fixed Fog of War and token hiding properly on switched-off lights
+* Added custom light icons for on/off state to let the GM know which lights are disabled
+* Updated on/off/toggle macros to warn when no light or token is selected
+* Updated monkeypatches for compatibility
+    * SightLayer.prototype._drawSource should now be fully compatible with other modules, as we wrap around it and call the original
+    * SightLayer.prototype.update and LightingLayer.prototype.update need more work, but waiting for FVTT 0.7.1 changes to try and solve this
+
 # 2.1.1 - 2020/08/01
 
 * Updated macros to call internal functions, allowing them to always keep updated when the module updates -
