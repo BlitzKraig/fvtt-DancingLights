@@ -659,320 +659,321 @@ class DancingLights {
                     game.settings.set("DancingLights", "defaultAmbientLight", mergeObject(light.flags.world.dancingLights, changes.flags.world.dancingLights));
                 }
             }
-        // if (light.flags.world.dancingLights.masterFire) {
-        //     if (!game.scenes.viewed.data.flags) {
-        //         game.scenes.viewed.data.flags = {};
-        //     }
-        //     if (!game.scenes.viewed.data.flags.world) {
-        //         game.scenes.viewed.data.flags.world = {};
-        //     }
-        //     if (!game.scenes.viewed.data.flags.world.dancingLights) {
-        //         game.scenes.viewed.data.flags.world.dancingLights = {};
-        //     }
-        //     game.scenes.viewed.data.flags.world.dancingLights.masterFireID = light.id;
-        // }
+            // if (light.flags.world.dancingLights.masterFire) {
+            //     if (!game.scenes.viewed.data.flags) {
+            //         game.scenes.viewed.data.flags = {};
+            //     }
+            //     if (!game.scenes.viewed.data.flags.world) {
+            //         game.scenes.viewed.data.flags.world = {};
+            //     }
+            //     if (!game.scenes.viewed.data.flags.world.dancingLights) {
+            //         game.scenes.viewed.data.flags.world.dancingLights = {};
+            //     }
+            //     game.scenes.viewed.data.flags.world.dancingLights.masterFireID = light.id;
+            // }
 
-        if (changes.flags.world.dancingLights.updateAll) {
-            changes.flags.world.dancingLights.updateAll = false;
-            let updateExtended = changes.flags.world.dancingLights.updateExtended;
-            let updateGranular = mergeObject(light.flags.world.dancingLights.updateGranular, changes.flags.world.dancingLights.updateGranular);
-            changes.flags.world.dancingLights.updateExtended = false;
-            (async () => {
-                await DancingLights.syncLightConfigs(scene, mergeObject(light, changes), updateExtended, updateGranular);
-            })();
+            if (changes.flags.world.dancingLights.updateAll) {
+                changes.flags.world.dancingLights.updateAll = false;
+                let updateExtended = changes.flags.world.dancingLights.updateExtended;
+                let updateGranular = mergeObject(light.flags.world.dancingLights.updateGranular, changes.flags.world.dancingLights.updateGranular);
+                changes.flags.world.dancingLights.updateExtended = false;
+                (async () => {
+                    await DancingLights.syncLightConfigs(scene, mergeObject(light, changes), updateExtended, updateGranular);
+                })();
+            }
+        }
+    }
+
+    /* beautify ignore:end */
+    /* beautify ignore:start */
+    static onUpdateAmbientLight(scene, light, changes, diff, sceneID) {
+        if (changes?.flags?.world?.dancingLights) {
+            DancingLights.destroyAllTimers();
+            DancingLights.createTimers();
         }
     }
     /* beautify ignore:end */
-}
-/* beautify ignore:start */
-static onUpdateAmbientLight(scene, light, changes, diff, sceneID) {
-    if (changes?.flags?.world?.dancingLights) {
-        DancingLights.destroyAllTimers();
-        DancingLights.createTimers();
-    }
-}
-/* beautify ignore:end */
 
-/* Light Config Update End */
+    /* Light Config Update End */
 
-/* Token Config */
-static onPreCreateToken(scene, token) {
-    if (!game.user.isGM) {
-        return
-    }
-    if (!token.flags) {
-        token.flags = {};
-    }
-    if (!token.flags.world) {
-        token.flags.world = {};
-    }
-    if (!token.flags.world.dancingLights && game.settings.get("DancingLights", "defaultTokenLight") != {}) {
-        token.flags.world.dancingLights = game.settings.get("DancingLights", "defaultTokenLight");
-    }
-}
-
-/* beautify ignore:start */
-static onPreUpdateToken(scene, token, changes, diff, sceneID) {
-    if(diff.skipDancingLights){
-        return;
-    }
-    if (!changes?.flags?.world?.dancingLights) {
-        // return if flag data was not changed in token. Prevents refreshing on token move for example.
-        return;
-    }
-
-    if (changes.flags.world.dancingLights.makeDefault) {
-        changes.flags.world.dancingLights.makeDefault = false;
-        if (changes.flags.world.dancingLights.enabled == false || token?.flags?.world?.dancingLights?.enabled == false) {
-            game.settings.set("DancingLights", "defaultTokenLight", {});
-        } else {
-            game.settings.set("DancingLights", "defaultTokenLight", mergeObject(token.flags.world.dancingLights, changes.flags.world.dancingLights));
+    /* Token Config */
+    static onPreCreateToken(scene, token) {
+        if (!game.user.isGM) {
+            return
+        }
+        if (!token.flags) {
+            token.flags = {};
+        }
+        if (!token.flags.world) {
+            token.flags.world = {};
+        }
+        if (!token.flags.world.dancingLights && game.settings.get("DancingLights", "defaultTokenLight") != {}) {
+            token.flags.world.dancingLights = game.settings.get("DancingLights", "defaultTokenLight");
         }
     }
-}
-/* beautify ignore:end */
 
-
-/* beautify ignore:start */
-static onUpdateToken(scene, token, changes, diff, sceneID) {
-    if (!changes?.flags?.world?.dancingLights) {
-        // return if flag data was not changed in token. Prevents refreshing on token move for example.
-        return;
-    }
-    DancingLights.forceReinit();
-    DancingLights.forceLayersUpdate();
-}
-/* beautify ignore:end */
-
-/* Token Config End */
-
-/* Multiselect Start */
-static addLightingSelect(controls) {
-    let lightingControl = controls.find(control => control.name === "lighting")
-    if (!lightingControl.tools.find(tool => tool.name === "select")) {
-        lightingControl.tools.unshift({
-            name: "select",
-            title: "Select Lights",
-            icon: "fas fa-expand"
-        })
-    }
-}
-
-static ambientLightSelected(ambientLight, selected) {
-    ambientLight.controlIcon.border.visible = selected
-}
-
-static ambientLightHovered(ambientLight, hovered) {
-    if (ambientLight._controlled) {
-        ambientLight.controlIcon.border.visible = true
-    }
-}
-/* Multiselect End */
-
-static onTick() {
-    if (canvas.sight.visible) {
-        const c = canvas.lighting.lighting.lights;
-        try {
-            c.clear();
-        } catch (e) {}
-    }
-    if (canvas.sight.light.bright.children.length > 0) {
-        DancingLights.drawLighting(true);
-    }
-};
-
-static drawLighting(advanceFrame) {
-    for (let k of canvas.sight.sources.lights.keys()) {
-        let s = canvas.sight.sources.lights.get(k);
-
-        let childLight = canvas.lighting.get(k.split('.')[1]) || canvas.tokens.get(k.split('.')[1]);
-
-        if (childLight) {
-
-            if (!childLight.data.flags.world) {
-                childLight.data.flags.world = {};
-            }
-            if (!childLight.data.flags.world.dancingLights) {
-                childLight.data.flags.world.dancingLights = {};
-            }
-            if (childLight.data.flags.world.dancingLights.enabled && !childLight.data.flags.world.dancingLights.hidden) {
-                let brightChild = canvas.sight.light.bright.getChildByName(k);
-                let dimChild = canvas.sight.light.dim.getChildByName(k);
-                try {
-                    if (advanceFrame) {
-                        let newAlpha;
-                        // let fireSyncedSuccess = false;
-                        // try {
-                        //     if (childLight.data.flags.world.dancingLights.type === 'fire' && childLight.data.flags.world.dancingLights.sync && masterFireID && childLight.id != game.scenes.viewed.data.flags.world.dancingLights.masterFireID) {
-                        //         newAlpha = canvas.lighting.get(masterFireID).alpha;
-                        //         fireSyncedSuccess = true;
-                        //     }
-                        // } catch (e) {
-                        //     //Ignore
-                        // }
-
-                        if (!newAlpha) {
-                            newAlpha = DancingLights.getAnimationFrame(childLight.id, childLight.data.flags.world.dancingLights.type, childLight.data.flags.world.dancingLights.minFade, childLight.data.flags.world.dancingLights.maxFade, childLight.data.flags.world.dancingLights.speed || 1, childLight.data.flags.world.dancingLights.sync || false, {
-                                blinkColorOnly: childLight.data.flags.world.dancingLights.blinkColorOnly
-                            });
-                        }
-                        if (brightChild) {
-                            brightChild.alpha = newAlpha;
-                        }
-                        if (dimChild && childLight.data.flags.world.dancingLights.dimFade) {
-                            dimChild.alpha = newAlpha;
-                        }
-                        // Keeping in case we want to add this. Almost looks good.
-                        // canvas.sight.light.bright.children[DancingLights.brightPairs[childLight.id]].filters[1].direction = Math.random() * 360;
-                        // canvas.sight.light.bright.children[DancingLights.brightPairs[childLight.id]].filters[1].refresh();
-                        if (childLight.data.flags.world.dancingLights.type === 'fire' || childLight.data.flags.world.dancingLights.type === 'legacyfire') {
-                            // Move the fire animation
-                            if (brightChild) {
-                                brightChild.light.transform.position.x = ((Math.random() - 0.5) * (childLight.id, childLight.data.flags.world.dancingLights.fireMovement || 5));
-                                brightChild.light.transform.position.y = ((Math.random() - 0.5) * (childLight.data.flags.world.dancingLights.fireMovement || 5));
-                            }
-                            if (dimChild && childLight.data.flags.world.dancingLights.dimMovement) {
-                                dimChild.light.transform.position.x = ((Math.random() - 0.5) * (childLight.id, childLight.data.flags.world.dancingLights.fireMovement || 5));
-                                dimChild.light.transform.position.y = ((Math.random() - 0.5) * (childLight.data.flags.world.dancingLights.fireMovement || 5));
-                            }
-                            // Not ready to give up on skew/scale. Scale could be done by clearing and redrawing, but for now we'll stick with the position shift.
-                            // canvas.sight.light.bright.children[DancingLights.brightPairs[childLight.id]].light.transform.skew.x = ((Math.random() - 0.5) / 50);
-                            // canvas.sight.light.bright.children[DancingLights.brightPairs[childLight.id]].light.transform.skew.y = ((Math.random() - 0.5) / 50);
-                        }
-                        if (brightChild) {
-                            DancingLights.lastAlpha[childLight.id] = brightChild.alpha;
-                            if (DancingLights.lastAlpha[childLight.id] === 0) {
-                                DancingLights.lastAlpha[childLight.id] = 0.001;
-                            }
-                        } else if (dimChild && childLight.data.flags.world.dancingLights.dimFade) {
-                            DancingLights.lastAlpha[childLight.id] = dimChild.alpha;
-                            if (DancingLights.lastAlpha[childLight.id] === 0) {
-                                DancingLights.lastAlpha[childLight.id] = 0.001;
-                            }
-                        }
-                    }
-                } catch (e) {
-                    console.log(e);
-                }
-
-
-            }
+    /* beautify ignore:start */
+    static onPreUpdateToken(scene, token, changes, diff, sceneID) {
+        if(diff.skipDancingLights){
+            return;
+        }
+        if (!changes?.flags?.world?.dancingLights) {
+            // return if flag data was not changed in token. Prevents refreshing on token move for example.
+            return;
         }
 
-        if (s.darknessThreshold <= canvas.lighting._darkness) {
-            if (childLight && childLight.data.flags.world.dancingLights && childLight.data.flags.world.dancingLights.enabled && !childLight.data.flags.world.dancingLights.hidden) {
-                let dancingLightOptions = childLight.data.flags.world.dancingLights;
-                let childID = childLight.id;
-
-                // Cookie options
-                let texture;
-                let matrix;
-                if (dancingLightOptions.cookieEnabled && dancingLightOptions.cookiePath) {
-                    texture = PIXI.Texture.from(dancingLightOptions.cookiePath);
-                    texture.baseTexture.source.loop = true
-                    let isToken = k.split('.')[0] === 'Token';
-                    if (dancingLightOptions.scaleCookie === undefined || dancingLightOptions.scaleCookie) {
-                        let xScale = Math.max(isToken ? childLight.dimLightRadius : childLight.dimRadius, isToken ? childLight.brightLightRadius : childLight.brightRadius) * 2 / texture.width; //+ (Math.random() * 1.01);
-                        let yScale = Math.max(isToken ? childLight.dimLightRadius : childLight.dimRadius, isToken ? childLight.brightLightRadius : childLight.brightRadius) * 2 / texture.height;
-                        let newXScale = dancingLightOptions.cookieScaleValue || 1;
-                        let newYScale = dancingLightOptions.cookieScaleValue || 1;
-                        if (isToken) {
-                            matrix = new PIXI.Matrix().scale(xScale, yScale)
-                                .scale(newXScale, newYScale)
-                                .translate(
-                                    childLight.getSightOrigin().x - Math.max(childLight.dimLightRadius, childLight.brightLightRadius),
-                                    childLight.getSightOrigin().y - Math.max(childLight.dimLightRadius, childLight.brightLightRadius))
-                                .translate(-Math.max(childLight.dimLightRadius, childLight.brightLightRadius) * (newXScale - 1), -Math.max(childLight.dimLightRadius, childLight.brightLightRadius) * (newYScale - 1));
-                        } else {
-                            matrix = new PIXI.Matrix().scale(xScale, yScale)
-                                .scale(newXScale, newYScale)
-                                .translate(childLight.x - Math.max(childLight.dimRadius, childLight.brightRadius),
-                                    childLight.y - Math.max(childLight.dimRadius, childLight.brightRadius))
-                                .translate(-Math.max(childLight.dimRadius, childLight.brightRadius) * (newXScale - 1), -Math.max(childLight.dimRadius, childLight.brightRadius) * (newYScale - 1));;
-                        }
-                    } else {
-                        if (isToken) {
-                            matrix = new PIXI.Matrix().translate(childLight.getSightOrigin().x - Math.max(childLight.dimLightRadius, childLight.brightLightRadius), childLight.getSightOrigin().y - Math.max(childLight.dimLightRadius, childLight.brightLightRadius));
-                        } else {
-                            matrix = new PIXI.Matrix().translate(childLight.x - Math.max(childLight.dimRadius, childLight.brightRadius), childLight.y - Math.max(childLight.dimRadius, childLight.brightRadius));
-                        }
-                    }
-                }
-                if (dancingLightOptions.type === 'fire' || dancingLightOptions.type === 'legacyfire') {
-                    if (dancingLightOptions.cookieEnabled && dancingLightOptions.cookiePath) {
-                        canvas.lighting.lighting.lights.beginTextureFill(texture, DancingLights.getColorFromAlpha(childID, [dancingLightOptions.startColor || DancingLights.Constants.defaultFireColor, dancingLightOptions.endColor || DancingLights.Constants.defaultFireColor], dancingLightOptions.minFade, dancingLightOptions.maxFade), dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha, matrix).drawPolygon(s.fov).endFill();
-                    } else {
-                        canvas.lighting.lighting.lights.beginFill(DancingLights.getColorFromAlpha(childID, [dancingLightOptions.startColor || DancingLights.Constants.defaultFireColor, dancingLightOptions.endColor || DancingLights.Constants.defaultFireColor], dancingLightOptions.minFade, dancingLightOptions.maxFade), dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
-                    }
-                } else if (dancingLightOptions.type === 'fade' && dancingLightOptions.blinkFadeColorEnabled !== 'none') {
-                    if (dancingLightOptions.blinkFadeColorEnabled == 'two') {
-                        if (dancingLightOptions.cookieEnabled && dancingLightOptions.cookiePath) {
-                            canvas.lighting.lighting.lights.beginTextureFill(texture, DancingLights.getColorFromAlpha(childID, [dancingLightOptions.blinkFadeColor1 || '#ff0000', dancingLightOptions.blinkFadeColor2 || '#00ff00'], dancingLightOptions.minFade, dancingLightOptions.maxFade), dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha, matrix).drawPolygon(s.fov).endFill();
-                        } else {
-                            canvas.lighting.lighting.lights.beginFill(DancingLights.getColorFromAlpha(childID, [dancingLightOptions.blinkFadeColor1 || '#ff0000', dancingLightOptions.blinkFadeColor2 || '#00ff00'], dancingLightOptions.minFade, dancingLightOptions.maxFade), dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
-                        }
-                    } else if (dancingLightOptions.blinkFadeColorEnabled == 'three') {
-                        if (dancingLightOptions.cookieEnabled && dancingLightOptions.cookiePath) {
-                            canvas.lighting.lighting.lights.beginTextureFill(texture, DancingLights.getColorFromAlpha(childID, [dancingLightOptions.blinkFadeColor1 || '#ff0000', dancingLightOptions.blinkFadeColor2 || '#00ff00', dancingLightOptions.blinkFadeColor3 || '#0000ff'], dancingLightOptions.minFade, dancingLightOptions.maxFade), dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha, matrix).drawPolygon(s.fov).endFill();
-                        } else {
-                            canvas.lighting.lighting.lights.beginFill(DancingLights.getColorFromAlpha(childID, [dancingLightOptions.blinkFadeColor1 || '#ff0000', dancingLightOptions.blinkFadeColor2 || '#00ff00', dancingLightOptions.blinkFadeColor3 || '#0000ff'], dancingLightOptions.minFade, dancingLightOptions.maxFade), dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
-                        }
-                    }
-                } else if (dancingLightOptions.type === 'blink' && dancingLightOptions.blinkFadeColorEnabled !== 'none') {
-                    if (dancingLightOptions.blinkFadeColorEnabled == 'two') {
-                        if (dancingLightOptions.blinkColorOnly) {
-                            if (dancingLightOptions.cookieEnabled && dancingLightOptions.cookiePath) {
-                                canvas.lighting.lighting.lights.beginTextureFill(texture, DancingLights.getBlinkColor(childID, [dancingLightOptions.blinkFadeColor1 || '#ff0000', dancingLightOptions.blinkFadeColor2 || '#00ff00']) || s.color, dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha, matrix).drawPolygon(s.fov).endFill();
-                            } else {
-                                canvas.lighting.lighting.lights.beginFill(DancingLights.getBlinkColor(childID, [dancingLightOptions.blinkFadeColor1 || '#ff0000', dancingLightOptions.blinkFadeColor2 || '#00ff00']) || s.color, dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
-                            }
-                        } else {
-                            if (dancingLightOptions.cookieEnabled && dancingLightOptions.cookiePath) {
-                                canvas.lighting.lighting.lights.beginTextureFill(texture, DancingLights.getColorFromAlpha(childID, [dancingLightOptions.blinkFadeColor1 || '#ff0000', dancingLightOptions.blinkFadeColor2 || '#00ff00'], dancingLightOptions.minFade, dancingLightOptions.maxFade) || s.color, dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha, matrix).drawPolygon(s.fov).endFill();
-                            } else {
-                                canvas.lighting.lighting.lights.beginFill(DancingLights.getColorFromAlpha(childID, [dancingLightOptions.blinkFadeColor1 || '#ff0000', dancingLightOptions.blinkFadeColor2 || '#00ff00'], dancingLightOptions.minFade, dancingLightOptions.maxFade) || s.color, dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
-                            }
-                        }
-                    } else if (dancingLightOptions.blinkFadeColorEnabled == 'three') {
-                        if (dancingLightOptions.cookieEnabled && dancingLightOptions.cookiePath) {
-                            canvas.lighting.lighting.lights.beginTextureFill(texture, DancingLights.getBlinkColor(childID, [dancingLightOptions.blinkFadeColor1 || '#ff0000', dancingLightOptions.blinkFadeColor2 || '#00ff00', dancingLightOptions.blinkFadeColor3 || '#0000ff']) || s.color, dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha, matrix).drawPolygon(s.fov).endFill();
-                        } else {
-                            canvas.lighting.lighting.lights.beginFill(DancingLights.getBlinkColor(childID, [dancingLightOptions.blinkFadeColor1 || '#ff0000', dancingLightOptions.blinkFadeColor2 || '#00ff00', dancingLightOptions.blinkFadeColor3 || '#0000ff']) || s.color, dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
-                        }
-                    }
-                } else {
-                    if (dancingLightOptions.cookieEnabled && dancingLightOptions.cookiePath) {
-                        canvas.lighting.lighting.lights.beginTextureFill(texture, s.color, dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha, matrix).drawPolygon(s.fov).endFill();
-                    } else {
-                        canvas.lighting.lighting.lights.beginFill(s.color, dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
-                    }
-                }
-            } else if (childLight && childLight.data.flags.world.dancingLights.hidden) {
-                let hiddenFov = {
-                    "points": [0, 0],
-                    "type": 0,
-                    "closeStroke": true
-                }
-                canvas.lighting.lighting.lights.beginFill(s.color, 0).drawPolygon(hiddenFov).endFill();
+        if (changes.flags.world.dancingLights.makeDefault) {
+            changes.flags.world.dancingLights.makeDefault = false;
+            if (changes.flags.world.dancingLights.enabled == false || token?.flags?.world?.dancingLights?.enabled == false) {
+                game.settings.set("DancingLights", "defaultTokenLight", {});
             } else {
-                canvas.lighting.lighting.lights.beginFill(s.color, s.alpha).drawPolygon(s.fov).endFill();
+                game.settings.set("DancingLights", "defaultTokenLight", mergeObject(token.flags.world.dancingLights, changes.flags.world.dancingLights));
             }
         }
     }
-    /* Fix for Pathfinder 1 'DarkVision' dimness in scenes with dark overlay set */
-    if (game.system.id === 'pf1') {
-        if (canvas.sight.hasDarkvision) {
-            canvas.lighting.updateDarkvision();
+    /* beautify ignore:end */
+
+
+    /* beautify ignore:start */
+    static onUpdateToken(scene, token, changes, diff, sceneID) {
+        if (!changes?.flags?.world?.dancingLights) {
+            // return if flag data was not changed in token. Prevents refreshing on token move for example.
+            return;
+        }
+        DancingLights.forceReinit();
+        DancingLights.forceLayersUpdate();
+    }
+    /* beautify ignore:end */
+
+    /* Token Config End */
+
+    /* Multiselect Start */
+    static addLightingSelect(controls) {
+        let lightingControl = controls.find(control => control.name === "lighting")
+        if (!lightingControl.tools.find(tool => tool.name === "select")) {
+            lightingControl.tools.unshift({
+                name: "select",
+                title: "Select Lights",
+                icon: "fas fa-expand"
+            })
         }
     }
-    /* PF1e fix end */
-}
 
-static onInit() {
-    let baseDrawControlIcon = AmbientLight.prototype._drawControlIcon;
-    AmbientLight.prototype._drawControlIcon = function (base) {
-        return function () {
-            /* beautify ignore:start */
+    static ambientLightSelected(ambientLight, selected) {
+        ambientLight.controlIcon.border.visible = selected
+    }
+
+    static ambientLightHovered(ambientLight, hovered) {
+        if (ambientLight._controlled) {
+            ambientLight.controlIcon.border.visible = true
+        }
+    }
+    /* Multiselect End */
+
+    static onTick() {
+        if (canvas.sight.visible) {
+            const c = canvas.lighting.lighting.lights;
+            try {
+                c.clear();
+            } catch (e) {}
+        }
+        if (canvas.sight.light.bright.children.length > 0) {
+            DancingLights.drawLighting(true);
+        }
+    };
+
+    static drawLighting(advanceFrame) {
+        for (let k of canvas.sight.sources.lights.keys()) {
+            let s = canvas.sight.sources.lights.get(k);
+
+            let childLight = canvas.lighting.get(k.split('.')[1]) || canvas.tokens.get(k.split('.')[1]);
+
+            if (childLight) {
+
+                if (!childLight.data.flags.world) {
+                    childLight.data.flags.world = {};
+                }
+                if (!childLight.data.flags.world.dancingLights) {
+                    childLight.data.flags.world.dancingLights = {};
+                }
+                if (childLight.data.flags.world.dancingLights.enabled && !childLight.data.flags.world.dancingLights.hidden) {
+                    let brightChild = canvas.sight.light.bright.getChildByName(k);
+                    let dimChild = canvas.sight.light.dim.getChildByName(k);
+                    try {
+                        if (advanceFrame) {
+                            let newAlpha;
+                            // let fireSyncedSuccess = false;
+                            // try {
+                            //     if (childLight.data.flags.world.dancingLights.type === 'fire' && childLight.data.flags.world.dancingLights.sync && masterFireID && childLight.id != game.scenes.viewed.data.flags.world.dancingLights.masterFireID) {
+                            //         newAlpha = canvas.lighting.get(masterFireID).alpha;
+                            //         fireSyncedSuccess = true;
+                            //     }
+                            // } catch (e) {
+                            //     //Ignore
+                            // }
+
+                            if (!newAlpha) {
+                                newAlpha = DancingLights.getAnimationFrame(childLight.id, childLight.data.flags.world.dancingLights.type, childLight.data.flags.world.dancingLights.minFade, childLight.data.flags.world.dancingLights.maxFade, childLight.data.flags.world.dancingLights.speed || 1, childLight.data.flags.world.dancingLights.sync || false, {
+                                    blinkColorOnly: childLight.data.flags.world.dancingLights.blinkColorOnly
+                                });
+                            }
+                            if (brightChild) {
+                                brightChild.alpha = newAlpha;
+                            }
+                            if (dimChild && childLight.data.flags.world.dancingLights.dimFade) {
+                                dimChild.alpha = newAlpha;
+                            }
+                            // Keeping in case we want to add this. Almost looks good.
+                            // canvas.sight.light.bright.children[DancingLights.brightPairs[childLight.id]].filters[1].direction = Math.random() * 360;
+                            // canvas.sight.light.bright.children[DancingLights.brightPairs[childLight.id]].filters[1].refresh();
+                            if (childLight.data.flags.world.dancingLights.type === 'fire' || childLight.data.flags.world.dancingLights.type === 'legacyfire') {
+                                // Move the fire animation
+                                if (brightChild) {
+                                    brightChild.light.transform.position.x = ((Math.random() - 0.5) * (childLight.id, childLight.data.flags.world.dancingLights.fireMovement || 5));
+                                    brightChild.light.transform.position.y = ((Math.random() - 0.5) * (childLight.data.flags.world.dancingLights.fireMovement || 5));
+                                }
+                                if (dimChild && childLight.data.flags.world.dancingLights.dimMovement) {
+                                    dimChild.light.transform.position.x = ((Math.random() - 0.5) * (childLight.id, childLight.data.flags.world.dancingLights.fireMovement || 5));
+                                    dimChild.light.transform.position.y = ((Math.random() - 0.5) * (childLight.data.flags.world.dancingLights.fireMovement || 5));
+                                }
+                                // Not ready to give up on skew/scale. Scale could be done by clearing and redrawing, but for now we'll stick with the position shift.
+                                // canvas.sight.light.bright.children[DancingLights.brightPairs[childLight.id]].light.transform.skew.x = ((Math.random() - 0.5) / 50);
+                                // canvas.sight.light.bright.children[DancingLights.brightPairs[childLight.id]].light.transform.skew.y = ((Math.random() - 0.5) / 50);
+                            }
+                            if (brightChild) {
+                                DancingLights.lastAlpha[childLight.id] = brightChild.alpha;
+                                if (DancingLights.lastAlpha[childLight.id] === 0) {
+                                    DancingLights.lastAlpha[childLight.id] = 0.001;
+                                }
+                            } else if (dimChild && childLight.data.flags.world.dancingLights.dimFade) {
+                                DancingLights.lastAlpha[childLight.id] = dimChild.alpha;
+                                if (DancingLights.lastAlpha[childLight.id] === 0) {
+                                    DancingLights.lastAlpha[childLight.id] = 0.001;
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        console.log(e);
+                    }
+
+
+                }
+            }
+
+            if (s.darknessThreshold <= canvas.lighting._darkness) {
+                if (childLight && childLight.data.flags.world.dancingLights && childLight.data.flags.world.dancingLights.enabled && !childLight.data.flags.world.dancingLights.hidden) {
+                    let dancingLightOptions = childLight.data.flags.world.dancingLights;
+                    let childID = childLight.id;
+
+                    // Cookie options
+                    let texture;
+                    let matrix;
+                    if (dancingLightOptions.cookieEnabled && dancingLightOptions.cookiePath) {
+                        texture = PIXI.Texture.from(dancingLightOptions.cookiePath);
+                        texture.baseTexture.source.loop = true
+                        let isToken = k.split('.')[0] === 'Token';
+                        if (dancingLightOptions.scaleCookie === undefined || dancingLightOptions.scaleCookie) {
+                            let xScale = Math.max(isToken ? childLight.dimLightRadius : childLight.dimRadius, isToken ? childLight.brightLightRadius : childLight.brightRadius) * 2 / texture.width; //+ (Math.random() * 1.01);
+                            let yScale = Math.max(isToken ? childLight.dimLightRadius : childLight.dimRadius, isToken ? childLight.brightLightRadius : childLight.brightRadius) * 2 / texture.height;
+                            let newXScale = dancingLightOptions.cookieScaleValue || 1;
+                            let newYScale = dancingLightOptions.cookieScaleValue || 1;
+                            if (isToken) {
+                                matrix = new PIXI.Matrix().scale(xScale, yScale)
+                                    .scale(newXScale, newYScale)
+                                    .translate(
+                                        childLight.getSightOrigin().x - Math.max(childLight.dimLightRadius, childLight.brightLightRadius),
+                                        childLight.getSightOrigin().y - Math.max(childLight.dimLightRadius, childLight.brightLightRadius))
+                                    .translate(-Math.max(childLight.dimLightRadius, childLight.brightLightRadius) * (newXScale - 1), -Math.max(childLight.dimLightRadius, childLight.brightLightRadius) * (newYScale - 1));
+                            } else {
+                                matrix = new PIXI.Matrix().scale(xScale, yScale)
+                                    .scale(newXScale, newYScale)
+                                    .translate(childLight.x - Math.max(childLight.dimRadius, childLight.brightRadius),
+                                        childLight.y - Math.max(childLight.dimRadius, childLight.brightRadius))
+                                    .translate(-Math.max(childLight.dimRadius, childLight.brightRadius) * (newXScale - 1), -Math.max(childLight.dimRadius, childLight.brightRadius) * (newYScale - 1));;
+                            }
+                        } else {
+                            if (isToken) {
+                                matrix = new PIXI.Matrix().translate(childLight.getSightOrigin().x - Math.max(childLight.dimLightRadius, childLight.brightLightRadius), childLight.getSightOrigin().y - Math.max(childLight.dimLightRadius, childLight.brightLightRadius));
+                            } else {
+                                matrix = new PIXI.Matrix().translate(childLight.x - Math.max(childLight.dimRadius, childLight.brightRadius), childLight.y - Math.max(childLight.dimRadius, childLight.brightRadius));
+                            }
+                        }
+                    }
+                    if (dancingLightOptions.type === 'fire' || dancingLightOptions.type === 'legacyfire') {
+                        if (dancingLightOptions.cookieEnabled && dancingLightOptions.cookiePath) {
+                            canvas.lighting.lighting.lights.beginTextureFill(texture, DancingLights.getColorFromAlpha(childID, [dancingLightOptions.startColor || DancingLights.Constants.defaultFireColor, dancingLightOptions.endColor || DancingLights.Constants.defaultFireColor], dancingLightOptions.minFade, dancingLightOptions.maxFade), dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha, matrix).drawPolygon(s.fov).endFill();
+                        } else {
+                            canvas.lighting.lighting.lights.beginFill(DancingLights.getColorFromAlpha(childID, [dancingLightOptions.startColor || DancingLights.Constants.defaultFireColor, dancingLightOptions.endColor || DancingLights.Constants.defaultFireColor], dancingLightOptions.minFade, dancingLightOptions.maxFade), dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
+                        }
+                    } else if (dancingLightOptions.type === 'fade' && dancingLightOptions.blinkFadeColorEnabled !== 'none') {
+                        if (dancingLightOptions.blinkFadeColorEnabled == 'two') {
+                            if (dancingLightOptions.cookieEnabled && dancingLightOptions.cookiePath) {
+                                canvas.lighting.lighting.lights.beginTextureFill(texture, DancingLights.getColorFromAlpha(childID, [dancingLightOptions.blinkFadeColor1 || '#ff0000', dancingLightOptions.blinkFadeColor2 || '#00ff00'], dancingLightOptions.minFade, dancingLightOptions.maxFade), dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha, matrix).drawPolygon(s.fov).endFill();
+                            } else {
+                                canvas.lighting.lighting.lights.beginFill(DancingLights.getColorFromAlpha(childID, [dancingLightOptions.blinkFadeColor1 || '#ff0000', dancingLightOptions.blinkFadeColor2 || '#00ff00'], dancingLightOptions.minFade, dancingLightOptions.maxFade), dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
+                            }
+                        } else if (dancingLightOptions.blinkFadeColorEnabled == 'three') {
+                            if (dancingLightOptions.cookieEnabled && dancingLightOptions.cookiePath) {
+                                canvas.lighting.lighting.lights.beginTextureFill(texture, DancingLights.getColorFromAlpha(childID, [dancingLightOptions.blinkFadeColor1 || '#ff0000', dancingLightOptions.blinkFadeColor2 || '#00ff00', dancingLightOptions.blinkFadeColor3 || '#0000ff'], dancingLightOptions.minFade, dancingLightOptions.maxFade), dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha, matrix).drawPolygon(s.fov).endFill();
+                            } else {
+                                canvas.lighting.lighting.lights.beginFill(DancingLights.getColorFromAlpha(childID, [dancingLightOptions.blinkFadeColor1 || '#ff0000', dancingLightOptions.blinkFadeColor2 || '#00ff00', dancingLightOptions.blinkFadeColor3 || '#0000ff'], dancingLightOptions.minFade, dancingLightOptions.maxFade), dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
+                            }
+                        }
+                    } else if (dancingLightOptions.type === 'blink' && dancingLightOptions.blinkFadeColorEnabled !== 'none') {
+                        if (dancingLightOptions.blinkFadeColorEnabled == 'two') {
+                            if (dancingLightOptions.blinkColorOnly) {
+                                if (dancingLightOptions.cookieEnabled && dancingLightOptions.cookiePath) {
+                                    canvas.lighting.lighting.lights.beginTextureFill(texture, DancingLights.getBlinkColor(childID, [dancingLightOptions.blinkFadeColor1 || '#ff0000', dancingLightOptions.blinkFadeColor2 || '#00ff00']) || s.color, dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha, matrix).drawPolygon(s.fov).endFill();
+                                } else {
+                                    canvas.lighting.lighting.lights.beginFill(DancingLights.getBlinkColor(childID, [dancingLightOptions.blinkFadeColor1 || '#ff0000', dancingLightOptions.blinkFadeColor2 || '#00ff00']) || s.color, dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
+                                }
+                            } else {
+                                if (dancingLightOptions.cookieEnabled && dancingLightOptions.cookiePath) {
+                                    canvas.lighting.lighting.lights.beginTextureFill(texture, DancingLights.getColorFromAlpha(childID, [dancingLightOptions.blinkFadeColor1 || '#ff0000', dancingLightOptions.blinkFadeColor2 || '#00ff00'], dancingLightOptions.minFade, dancingLightOptions.maxFade) || s.color, dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha, matrix).drawPolygon(s.fov).endFill();
+                                } else {
+                                    canvas.lighting.lighting.lights.beginFill(DancingLights.getColorFromAlpha(childID, [dancingLightOptions.blinkFadeColor1 || '#ff0000', dancingLightOptions.blinkFadeColor2 || '#00ff00'], dancingLightOptions.minFade, dancingLightOptions.maxFade) || s.color, dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
+                                }
+                            }
+                        } else if (dancingLightOptions.blinkFadeColorEnabled == 'three') {
+                            if (dancingLightOptions.cookieEnabled && dancingLightOptions.cookiePath) {
+                                canvas.lighting.lighting.lights.beginTextureFill(texture, DancingLights.getBlinkColor(childID, [dancingLightOptions.blinkFadeColor1 || '#ff0000', dancingLightOptions.blinkFadeColor2 || '#00ff00', dancingLightOptions.blinkFadeColor3 || '#0000ff']) || s.color, dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha, matrix).drawPolygon(s.fov).endFill();
+                            } else {
+                                canvas.lighting.lighting.lights.beginFill(DancingLights.getBlinkColor(childID, [dancingLightOptions.blinkFadeColor1 || '#ff0000', dancingLightOptions.blinkFadeColor2 || '#00ff00', dancingLightOptions.blinkFadeColor3 || '#0000ff']) || s.color, dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
+                            }
+                        }
+                    } else {
+                        if (dancingLightOptions.cookieEnabled && dancingLightOptions.cookiePath) {
+                            canvas.lighting.lighting.lights.beginTextureFill(texture, s.color, dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha, matrix).drawPolygon(s.fov).endFill();
+                        } else {
+                            canvas.lighting.lighting.lights.beginFill(s.color, dancingLightOptions.animateDimAlpha ? DancingLights.lastAlpha[childID] || s.alpha : s.alpha).drawPolygon(s.fov).endFill();
+                        }
+                    }
+                } else if (childLight && childLight.data.flags.world.dancingLights.hidden) {
+                    let hiddenFov = {
+                        "points": [0, 0],
+                        "type": 0,
+                        "closeStroke": true
+                    }
+                    canvas.lighting.lighting.lights.beginFill(s.color, 0).drawPolygon(hiddenFov).endFill();
+                } else {
+                    canvas.lighting.lighting.lights.beginFill(s.color, s.alpha).drawPolygon(s.fov).endFill();
+                }
+            }
+        }
+        /* Fix for Pathfinder 1 'DarkVision' dimness in scenes with dark overlay set */
+        if (game.system.id === 'pf1') {
+            if (canvas.sight.hasDarkvision) {
+                canvas.lighting.updateDarkvision();
+            }
+        }
+        /* PF1e fix end */
+    }
+
+    static onInit() {
+        let baseDrawControlIcon = AmbientLight.prototype._drawControlIcon;
+        AmbientLight.prototype._drawControlIcon = function (base) {
+            return function () {
+                /* beautify ignore:start */
             if (this?.data?.flags?.world?.dancingLights?.hidden) {
                 const size = Math.max(Math.round((canvas.dimensions.size * 0.5) / 20) * 20, 40);
                 let icon = new ControlIcon({
@@ -986,151 +987,151 @@ static onInit() {
                 return base();
             }  
             /* beautify ignore:end */
-        };
-    }(baseDrawControlIcon);
-    
-    game.settings.register("DancingLights", "enabledForClient", {
-        name: "Enable Dancing Lights (Per client)",
-        hint: "My PC can handle it! If a player is having trouble with dancing lights, but you don't want everyone else to miss out, ask them to disable this checkbox",
-        scope: "client",
-        config: true,
-        default: true,
-        type: Boolean,
-        onChange: value => {
-            window.location.reload();
-        }
-    })
+            };
+        }(baseDrawControlIcon);
 
-    game.settings.register("DancingLights", "useLibColorSettings", {
-        name: "Use lib - Color Settings",
-        hint: "Use the Color Settings library for color pickers. Note that this lib must be installed and enabled as a module. https://github.com/ardittristan/VTTColorSettings",
-        scope: "world",
-        config: true,
-        default: false,
-        type: Boolean
-    })
-
-    game.settings.register("DancingLights", "dimBrightVision", {
-        name: "Dim token Bright Vision (Per client)",
-        hint: "Changing this will refresh your page! Disable this to revert bright vision circles back to default. Note that you will not see some Dancing Lights effects properly while they are within your bright vision radius.",
-        scope: "client",
-        config: true,
-        default: true,
-        type: Boolean,
-        onChange: value => {
-            window.location.reload();
-        }
-    })
-    game.settings.register("DancingLights", "dimBrightVisionAmount", {
-        name: "Dim token Bright Vision alpha (Per client)",
-        hint: "Changing this will refresh your page! Tweak how dim the Bright Vision radius is. This can help to still see the lights inside a characters bright vision. 0.1 is very dim, 1 is fully bright",
-        scope: "client",
-        config: true,
-        type: Number,
-        range: { // If range is specified, the resulting setting will be a range slider
-            min: 0.1,
-            max: 1,
-            step: 0.05
-        },
-        default: 0.9,
-        onChange: value => {
-            window.location.reload();
-        }
-    })
-    game.settings.register("DancingLights", "clientSpeed", {
-        name: "Client Interval",
-        hint: "Change the tickrate of DancingLights, in ms. Lower is faster, and more resource intensive. The module was designed with an interval of 80 in mind, but you can try increasing this a little if a player is having performance issues. Note that their animations will run slower as a result. ~100ms should still be relatively smooth, while reducing CPU load.",
-        scope: "client",
-        config: true,
-        type: Number,
-        range: { // If range is specified, the resulting setting will be a range slider
-            min: 10,
-            max: 400,
-            step: 1
-        },
-        default: 80,
-        onChange: value => {
-            canvas.draw();
-            // window.location.reload();
-        }
-    })
-    game.settings.register("DancingLights", "updateMask", {
-        name: "Prevent Light Bleed - EXPERIMENTAL",
-        hint: "World setting. The GM can enable this to update the light mask to try and prevent 'light bleeding' when a blurred light hits a wall. Testing so far indicates this is safe, but if you see any weird stuff happening with lights, try disabling this - and contact me on Discord if enabling this causes issues @Blitz#6797",
-        scope: "world",
-        config: true,
-        default: false,
-        type: Boolean,
-        onChange: value => {
-            window.location.reload();
-        }
-    })
-    game.settings.register("DancingLights", "defaultAmbientLight", {
-        name: "Default Ambient Light Settings",
-        scope: "world",
-        config: false,
-        default: {}
-    })
-    game.settings.register("DancingLights", "defaultTokenLight", {
-        name: "Default Token Light Settings",
-        scope: "world",
-        config: false,
-        default: {}
-    })
-    game.settings.register("DancingLights", "savedLightSettings", {
-        name: "Default Token Light Settings",
-        scope: "world",
-        config: false,
-        default: {}
-    })
-
-    if (game.settings.get("DancingLights", "enabledForClient")) {
-        Hooks.on("renderLightConfig", DancingLights.onRenderLightConfig);
-        Hooks.on("renderTokenConfig", DancingLights.onRenderTokenConfig);
-        Hooks.on("preUpdateAmbientLight", DancingLights.onPreUpdateAmbientLight);
-        Hooks.on("updateAmbientLight", DancingLights.onUpdateAmbientLight);
-        Hooks.on("preCreateAmbientLight", DancingLights.onPreCreateAmbientLight);
-        Hooks.on("createAmbientLight", () => {
-            DancingLights.forceReinit();
-            DancingLights.forceLayersUpdate();
-        });
-        Hooks.on("preCreateToken", DancingLights.onPreCreateToken);
-        Hooks.on("createToken", () => {
-            DancingLights.forceReinit();
-            DancingLights.forceLayersUpdate();
-        })
-        Hooks.on("preUpdateToken", DancingLights.onPreUpdateToken);
-        Hooks.on("updateToken", DancingLights.onUpdateToken);
-        Hooks.on("controlToken", DancingLights.forceReinit);
-        Hooks.once("canvasReady", DancingLights.patchLighting);
-        Hooks.once("canvasReady", () => AmbientLight.layer.options.controllableObjects = true);
-        Hooks.on("canvasReady", DancingLights.forceReinit);
-        Hooks.on('getSceneControlButtons', DancingLights.addLightingSelect);
-        Hooks.on('controlAmbientLight', DancingLights.ambientLightSelected);
-        Hooks.on('hoverAmbientLight', DancingLights.ambientLightHovered);
-        Hooks.once('ready', () => {
-            if (game.settings.get("DancingLights", "useLibColorSettings")) {
-                try {
-                    window.Ardittristan.ColorSetting.tester
-                } catch {
-                    ui.notifications.notify('You have "lib - ColorSettings" enabled for Dancing Lights, but do not appear to have the lib module enabled. Please make sure you have the "lib - ColorSettings" module installed, or disable the lib in Dancing Lights settings', "error", {
-                        permanent: true
-                    });
-                }
+        game.settings.register("DancingLights", "enabledForClient", {
+            name: "Enable Dancing Lights (Per client)",
+            hint: "My PC can handle it! If a player is having trouble with dancing lights, but you don't want everyone else to miss out, ask them to disable this checkbox",
+            scope: "client",
+            config: true,
+            default: true,
+            type: Boolean,
+            onChange: value => {
+                window.location.reload();
             }
-        });
-        if (game.system.id === 'pf1') {
-            Hooks.on("renderTokenConfigPF", DancingLights.onRenderTokenConfig);
+        })
+
+        game.settings.register("DancingLights", "useLibColorSettings", {
+            name: "Use lib - Color Settings",
+            hint: "Use the Color Settings library for color pickers. Note that this lib must be installed and enabled as a module. https://github.com/ardittristan/VTTColorSettings",
+            scope: "world",
+            config: true,
+            default: false,
+            type: Boolean
+        })
+
+        game.settings.register("DancingLights", "dimBrightVision", {
+            name: "Dim token Bright Vision (Per client)",
+            hint: "Changing this will refresh your page! Disable this to revert bright vision circles back to default. Note that you will not see some Dancing Lights effects properly while they are within your bright vision radius.",
+            scope: "client",
+            config: true,
+            default: true,
+            type: Boolean,
+            onChange: value => {
+                window.location.reload();
+            }
+        })
+        game.settings.register("DancingLights", "dimBrightVisionAmount", {
+            name: "Dim token Bright Vision alpha (Per client)",
+            hint: "Changing this will refresh your page! Tweak how dim the Bright Vision radius is. This can help to still see the lights inside a characters bright vision. 0.1 is very dim, 1 is fully bright",
+            scope: "client",
+            config: true,
+            type: Number,
+            range: { // If range is specified, the resulting setting will be a range slider
+                min: 0.1,
+                max: 1,
+                step: 0.05
+            },
+            default: 0.9,
+            onChange: value => {
+                window.location.reload();
+            }
+        })
+        game.settings.register("DancingLights", "clientSpeed", {
+            name: "Client Interval",
+            hint: "Change the tickrate of DancingLights, in ms. Lower is faster, and more resource intensive. The module was designed with an interval of 80 in mind, but you can try increasing this a little if a player is having performance issues. Note that their animations will run slower as a result. ~100ms should still be relatively smooth, while reducing CPU load.",
+            scope: "client",
+            config: true,
+            type: Number,
+            range: { // If range is specified, the resulting setting will be a range slider
+                min: 10,
+                max: 400,
+                step: 1
+            },
+            default: 80,
+            onChange: value => {
+                canvas.draw();
+                // window.location.reload();
+            }
+        })
+        game.settings.register("DancingLights", "updateMask", {
+            name: "Prevent Light Bleed - EXPERIMENTAL",
+            hint: "World setting. The GM can enable this to update the light mask to try and prevent 'light bleeding' when a blurred light hits a wall. Testing so far indicates this is safe, but if you see any weird stuff happening with lights, try disabling this - and contact me on Discord if enabling this causes issues @Blitz#6797",
+            scope: "world",
+            config: true,
+            default: false,
+            type: Boolean,
+            onChange: value => {
+                window.location.reload();
+            }
+        })
+        game.settings.register("DancingLights", "defaultAmbientLight", {
+            name: "Default Ambient Light Settings",
+            scope: "world",
+            config: false,
+            default: {}
+        })
+        game.settings.register("DancingLights", "defaultTokenLight", {
+            name: "Default Token Light Settings",
+            scope: "world",
+            config: false,
+            default: {}
+        })
+        game.settings.register("DancingLights", "savedLightSettings", {
+            name: "Default Token Light Settings",
+            scope: "world",
+            config: false,
+            default: {}
+        })
+
+        if (game.settings.get("DancingLights", "enabledForClient")) {
+            Hooks.on("renderLightConfig", DancingLights.onRenderLightConfig);
+            Hooks.on("renderTokenConfig", DancingLights.onRenderTokenConfig);
+            Hooks.on("preUpdateAmbientLight", DancingLights.onPreUpdateAmbientLight);
+            Hooks.on("updateAmbientLight", DancingLights.onUpdateAmbientLight);
+            Hooks.on("preCreateAmbientLight", DancingLights.onPreCreateAmbientLight);
+            Hooks.on("createAmbientLight", () => {
+                DancingLights.forceReinit();
+                DancingLights.forceLayersUpdate();
+            });
+            Hooks.on("preCreateToken", DancingLights.onPreCreateToken);
+            Hooks.on("createToken", () => {
+                DancingLights.forceReinit();
+                DancingLights.forceLayersUpdate();
+            })
+            Hooks.on("preUpdateToken", DancingLights.onPreUpdateToken);
+            Hooks.on("updateToken", DancingLights.onUpdateToken);
+            Hooks.on("controlToken", DancingLights.forceReinit);
+            Hooks.once("canvasReady", DancingLights.patchLighting);
+            Hooks.once("canvasReady", () => AmbientLight.layer.options.controllableObjects = true);
+            Hooks.on("canvasReady", DancingLights.forceReinit);
+            Hooks.on('getSceneControlButtons', DancingLights.addLightingSelect);
+            Hooks.on('controlAmbientLight', DancingLights.ambientLightSelected);
+            Hooks.on('hoverAmbientLight', DancingLights.ambientLightHovered);
+            Hooks.once('ready', () => {
+                if (game.settings.get("DancingLights", "useLibColorSettings")) {
+                    try {
+                        window.Ardittristan.ColorSetting.tester
+                    } catch {
+                        ui.notifications.notify('You have "lib - ColorSettings" enabled for Dancing Lights, but do not appear to have the lib module enabled. Please make sure you have the "lib - ColorSettings" module installed, or disable the lib in Dancing Lights settings', "error", {
+                            permanent: true
+                        });
+                    }
+                }
+            });
+            if (game.system.id === 'pf1') {
+                Hooks.on("renderTokenConfigPF", DancingLights.onRenderTokenConfig);
+            }
         }
     }
-}
 
-static patchLighting() {
-    // Forgive me -- This will probably break with some Foundry updates
-    // TODO: Add version checks with custom patches - This works with at least 0.6.2 -> 0.6.4
+    static patchLighting() {
+        // Forgive me -- This will probably break with some Foundry updates
+        // TODO: Add version checks with custom patches - This works with at least 0.6.2 -> 0.6.4
 
-    // ? -> 0.6.2 -> 0.6.5
-    /*
+        // ? -> 0.6.2 -> 0.6.5
+        /*
   _drawSource(hex, {x, y, radius, fov}={}) {
     let source = new PIXI.Container();
     source.light = source.addChild(new PIXI.Graphics());
@@ -1141,109 +1142,109 @@ static patchLighting() {
     return source;
   }
     */
-    canvas.sight._drawSource = function (hex, {
-        x,
-        y,
-        radius,
-        fov
-    } = {}, keys) {
-        /* Monkeypatch block */
-        let dancingLightOptions;
-        let [type, id] = keys.k.split('.');
-        let channel = keys.c;
-        let layer = keys.layerKey;
-        if (layer != 'vision' && (channel === 'bright' || channel === 'dim')) {
-            let child;
-            if (type === 'Light') {
-                child = canvas.lighting.get(id);
-            } else if (type === 'Token') {
-                child = canvas.tokens.get(id);
-            }
-            if (child && child.data.flags && child.data.flags.world && child.data.flags.world.dancingLights) {
-                dancingLightOptions = child.data.flags.world.dancingLights;
-            }
-            /* beautify ignore:start */
-            if (dancingLightOptions?.hidden) {
-                radius = 0;
-                fov = {
-                    "points": [0, 0],
-                    "type": 0,
-                    "closeStroke": true
-                };
-            }
-            /* beautify ignore:end */
-        }
-        /* Monkeypatch block end */
+        let baseSightDrawSource = SightLayer.prototype._drawSource;
+        SightLayer.prototype._drawSource = function (base) {
+            return function (hex, {
+                x,
+                y,
+                radius,
+                fov
+            } = {}, keys) {
 
-        let source = new PIXI.Container();
-        source.light = source.addChild(new PIXI.Graphics());
-        source.light.beginFill(hex, 1.0).drawCircle(x, y, radius).endFill();
-        source.fov = source.addChild(new PIXI.Graphics());
-        source.fov.beginFill(0xFFFFFF, 1.0).drawPolygon(fov).endFill();
-        source.light.mask = source.fov;
-
-        /* Monkeypatch block */
-
-        if (layer === 'vision' && game.settings.get("DancingLights", "dimBrightVision")) {
-            source.alpha = game.settings.get("DancingLights", "dimBrightVisionAmount") || 0.5;
-        }
-
-        /* beautify ignore:start */
-        if (layer != 'vision' && !dancingLightOptions?.hidden) {
-            if (channel === 'bright') {
-                source.name = `${type}.${id}`;
-                if (dancingLightOptions && dancingLightOptions.enabled) {
-                    if (dancingLightOptions.blurEnabled) {
-                        if (dancingLightOptions.blurAmount == 0) {
-                            source.light.filters = [];
-                        } else {
-                            source.light.filters = [new PIXI.filters.BlurFilter(dancingLightOptions.blurAmount)]
-                        }
-                        // Keeping in case we want to add this. Almost looks good.
-                        // source.filters.push(new PIXI.filters.GlitchFilter({slices:30, offset: 5, direction: 45, average: true}));
+                /* Monkeypatch block */
+                let dancingLightOptions;
+                let [type, id] = keys.k.split('.');
+                let channel = keys.c;
+                let layer = keys.layerKey;
+                if (layer != 'vision' && (channel === 'bright' || channel === 'dim')) {
+                    let child;
+                    if (type === 'Light') {
+                        child = canvas.lighting.get(id);
+                    } else if (type === 'Token') {
+                        child = canvas.tokens.get(id);
                     }
-                    source.alpha = DancingLights.lastAlpha[id]
-                    if (dancingLightOptions.type === 'fire' || dancingLightOptions.type === 'legacyfire') {
-                        try {
-                            source.light.transform.position.x = ((Math.random() - 0.5) * (dancingLightOptions.fireMovement || 5));
-                            source.light.transform.position.y = ((Math.random() - 0.5) * (dancingLightOptions.fireMovement || 5));
-                            // canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].light.transform.skew.x = ((Math.random() - 0.5) / 50);
-                            // canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].light.transform.skew.y = ((Math.random() - 0.5) / 50);
-                        } catch (e) {}
+                    if (child && child.data.flags && child.data.flags.world && child.data.flags.world.dancingLights) {
+                        dancingLightOptions = child.data.flags.world.dancingLights;
+                    }
+                    /* beautify ignore:start */
+                    if (dancingLightOptions?.hidden) {
+                        radius = 0;
+                        fov = {
+                            "points": [0, 0],
+                            "type": 0,
+                            "closeStroke": true
+                        };
+                    }
+                    /* beautify ignore:end */
+                }
+                /* Monkeypatch block end */
+
+                // Calling original fn here
+                let source = base(arguments[0], arguments[1]);
+
+                /* Monkeypatch block */
+
+                if (layer === 'vision' && game.settings.get("DancingLights", "dimBrightVision")) {
+                    source.alpha = game.settings.get("DancingLights", "dimBrightVisionAmount") || 0.5;
+                }
+
+                /* beautify ignore:start */
+                if (layer != 'vision' && !dancingLightOptions?.hidden) {
+                    if (channel === 'bright') {
+                        source.name = `${type}.${id}`;
+                        if (dancingLightOptions && dancingLightOptions.enabled) {
+                            if (dancingLightOptions.blurEnabled) {
+                                if (dancingLightOptions.blurAmount == 0) {
+                                    source.light.filters = [];
+                                } else {
+                                    source.light.filters = [new PIXI.filters.BlurFilter(dancingLightOptions.blurAmount)]
+                                }
+                                // Keeping in case we want to add this. Almost looks good.
+                                // source.filters.push(new PIXI.filters.GlitchFilter({slices:30, offset: 5, direction: 45, average: true}));
+                            }
+                            source.alpha = DancingLights.lastAlpha[id]
+                            if (dancingLightOptions.type === 'fire' || dancingLightOptions.type === 'legacyfire') {
+                                try {
+                                    source.light.transform.position.x = ((Math.random() - 0.5) * (dancingLightOptions.fireMovement || 5));
+                                    source.light.transform.position.y = ((Math.random() - 0.5) * (dancingLightOptions.fireMovement || 5));
+                                    // canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].light.transform.skew.x = ((Math.random() - 0.5) / 50);
+                                    // canvas.sight.light.bright.children[DancingLights.brightPairs[child.id]].light.transform.skew.y = ((Math.random() - 0.5) / 50);
+                                } catch (e) {}
+                            }
+                        }
+                    } else if (channel === 'dim') {
+                        source.name = `${type}.${id}`;
+                        if (dancingLightOptions && dancingLightOptions.enabled) {
+                            if (dancingLightOptions.dimBlurEnabled) {
+                                if (dancingLightOptions.dimBlurAmount == 0) {
+                                    source.light.filters = [];
+                                } else {
+                                    source.light.filters = [new PIXI.filters.BlurFilter(dancingLightOptions.dimBlurAmount)]
+                                }
+                            }
+                            if (dancingLightOptions.dimFade) {
+                                source.alpha = DancingLights.lastAlpha[id]
+                            }
+                            if ((dancingLightOptions.type === 'fire' || dancingLightOptions.type === 'legacyfire') && dancingLightOptions.dimMovement) {
+                                try {
+                                    source.light.transform.position.x = ((Math.random() - 0.5) * (dancingLightOptions.fireMovement || 5));
+                                    source.light.transform.position.y = ((Math.random() - 0.5) * (dancingLightOptions.fireMovement || 5));
+                                } catch (e) {}
+                            }
+                        }
                     }
                 }
-            } else if (channel === 'dim') {
-                source.name = `${type}.${id}`;
-                if (dancingLightOptions && dancingLightOptions.enabled) {
-                    if (dancingLightOptions.dimBlurEnabled) {
-                        if (dancingLightOptions.dimBlurAmount == 0) {
-                            source.light.filters = [];
-                        } else {
-                            source.light.filters = [new PIXI.filters.BlurFilter(dancingLightOptions.dimBlurAmount)]
-                        }
-                    }
-                    if (dancingLightOptions.dimFade) {
-                        source.alpha = DancingLights.lastAlpha[id]
-                    }
-                    if ((dancingLightOptions.type === 'fire' || dancingLightOptions.type === 'legacyfire') && dancingLightOptions.dimMovement) {
-                        try {
-                            source.light.transform.position.x = ((Math.random() - 0.5) * (dancingLightOptions.fireMovement || 5));
-                            source.light.transform.position.y = ((Math.random() - 0.5) * (dancingLightOptions.fireMovement || 5));
-                        } catch (e) {}
-                    }
+                /* beautify ignore:end */
+                if (game.settings.get("DancingLights", "updateMask") === true) {
+                    source.mask = source.fov;
                 }
-            }
-        }
-    /* beautify ignore:end */
-        if (game.settings.get("DancingLights", "updateMask") === true) {
-            source.mask = source.fov;
-        }
-        /* Monkeypatch block end */
-        return source;
-    }
+                /* Monkeypatch block end */
+                return source;
+            };
+        }(baseSightDrawSource);
 
-    // ? -> 0.6.2 -> 0.6.5
-    /*
+        // ? -> 0.6.2 -> 0.6.5
+        /*
 update() {
     if ( !this._initialized ) return;
     const light = this.light;
@@ -1302,166 +1303,172 @@ update() {
     }
   }
         */
-    canvas.sight.update = function () {
-        if (!this._initialized) return;
-        const light = this.light;
-        const fog = this.fog.update;
-        const channels = this._channels;
-        const pNow = CONFIG.debug.sight ? performance.now() : null;
 
-        // Clear currently rendered sources
-        for (let channel of light.children) {
-            channel.removeChildren().forEach(c => c.destroy({
-                children: true,
-                texture: true,
-                baseTexture: true
-            }));
-        }
-        light.los.clear();
+        let baseSightUpdate = SightLayer.prototype.update;
+        SightLayer.prototype.update = function (base) {
+            return function () {
+                if (!this._initialized) return;
+                const light = this.light;
+                const fog = this.fog.update;
+                const channels = this._channels;
+                const pNow = CONFIG.debug.sight ? performance.now() : null;
 
-        // If token vision is not used or no vision sources exist
-        if (!this.tokenVision || !this.sources.vision.size) {
-            this.visible = this.tokenVision && !game.user.isGM;
-            return this.restrictVisibility();
-        }
-        this.visible = true;
-
-        // Iterate over all sources and render them
-
-        /* Patch start */
-        let tempIndex = 0;
-        for (let sources of Object.values(this.sources)) {
-            let layerKey = Object.keys(this.sources)[tempIndex++];
-            // for ( let s of sources.values() ) {
-            // for (let sourceKey of Object.keys(this.sources)) {
-            //     let sources = this.sources[sourceKey];
-            // TODO for 0.7.1+, set the fov outside the update method and try to use the default version
-            for (let k of sources.keys()) {
-                let isHidden;
-                if (layerKey === "lights") {
-                    let [type, id] = k.split('.');
-                    /* beautify ignore:start */
-                if (type === "Light") {
-                    isHidden = canvas.lighting.get(id)?.data?.flags?.world?.dancingLights?.hidden;
-                } else if (type === "Token") {
-                    isHidden = canvas.tokens.get(id)?.data?.flags?.world?.dancingLights?.hidden;
+                // Clear currently rendered sources
+                for (let channel of light.children) {
+                    channel.removeChildren().forEach(c => c.destroy({
+                        children: true,
+                        texture: true,
+                        baseTexture: true
+                    }));
                 }
-                /* beautify ignore:end */
-                }
-                let s = sources.get(k);
-                if (isHidden) {
-                    s.fov = {
-                        "points": [0, 0],
-                        "type": 0,
-                        "closeStroke": true
-                    };
-                }
+                light.los.clear();
 
-                /* Patch end */
-
-                // Draw line of sight polygons
-                if (s.los) {
-                    light.los.beginFill(0xFFFFFF, 1.0).drawPolygon(s.los).endFill();
-                    if (this._fogUpdates) fog.los.beginFill(0xFFFFFF, 1.0).drawPolygon(s.los).endFill();
+                // If token vision is not used or no vision sources exist
+                if (!this.tokenVision || !this.sources.vision.size) {
+                    this.visible = this.tokenVision && !game.user.isGM;
+                    return this.restrictVisibility();
                 }
+                this.visible = true;
 
-                // Draw fog exploration polygons
-                if (this._fogUpdates && ((s.channels.dim + s.channels.bright) > 0)) {
-                    fog.fov.beginFill(channels.explored.hex, 1.0).drawPolygon(s.fov).endFill();
-                }
+                // Iterate over all sources and render them
 
-                // Draw the source for each vision channel
                 /* Patch start */
-                for (let [c, r] of Object.entries(s.channels)) {
-                    if ((r !== 0) && s.darknessThreshold <= canvas.lighting._darkness) {
-                        let channel = light[c];
-                        channel.addChild(this._drawSource(channels[c].hex, {
-                            x: s.x,
-                            y: s.y,
-                            radius: r,
-                            fov: s.fov
-                        }, {
-                            layerKey,
-                            k,
-                            c
-                        }));
+                let tempIndex = 0;
+                for (let sources of Object.values(this.sources)) {
+                    let layerKey = Object.keys(this.sources)[tempIndex++];
+                    // for ( let s of sources.values() ) {
+                    // for (let sourceKey of Object.keys(this.sources)) {
+                    //     let sources = this.sources[sourceKey];
+                    // TODO for 0.7.1+, set the fov outside the update method and try to use the default version
+                    for (let k of sources.keys()) {
+                        let isHidden;
+                        if (layerKey === "lights") {
+                            let [type, id] = k.split('.');
+                            /* beautify ignore:start */
+                            if (type === "Light") {
+                                isHidden = canvas.lighting.get(id)?.data?.flags?.world?.dancingLights?.hidden;
+                            } else if (type === "Token") {
+                                isHidden = canvas.tokens.get(id)?.data?.flags?.world?.dancingLights?.hidden;
+                            }
+                            /* beautify ignore:end */
+                        }
+                        let s = sources.get(k);
+                        if (isHidden) {
+                            s.fov = {
+                                "points": [0, 0],
+                                "type": 0,
+                                "closeStroke": true
+                            };
+                        }
+
+                        /* Patch end */
+
+                        // Draw line of sight polygons
+                        if (s.los) {
+                            light.los.beginFill(0xFFFFFF, 1.0).drawPolygon(s.los).endFill();
+                            if (this._fogUpdates) fog.los.beginFill(0xFFFFFF, 1.0).drawPolygon(s.los).endFill();
+                        }
+
+                        // Draw fog exploration polygons
+                        if (this._fogUpdates && ((s.channels.dim + s.channels.bright) > 0)) {
+                            fog.fov.beginFill(channels.explored.hex, 1.0).drawPolygon(s.fov).endFill();
+                        }
+
+                        // Draw the source for each vision channel
+                        /* Patch start */
+                        for (let [c, r] of Object.entries(s.channels)) {
+                            if ((r !== 0) && s.darknessThreshold <= canvas.lighting._darkness) {
+                                let channel = light[c];
+                                channel.addChild(this._drawSource(channels[c].hex, {
+                                    x: s.x,
+                                    y: s.y,
+                                    radius: r,
+                                    fov: s.fov
+                                }, {
+                                    layerKey,
+                                    k,
+                                    c
+                                }));
+                            }
+                        }
+                        /* Patch end */
                     }
                 }
+
+                // Draw fog exploration every 10 positions
+                if (this._fogUpdates >= 10) this._commitFogUpdate();
+
+                // Restrict visibility of objects
+                this.restrictVisibility();
+
+                // Log debug status
+                if (CONFIG.debug.sight) {
+                    let ns = performance.now() - pNow;
+                    console.log(`Rendered Sight Layer update in ${ns}ms`);
+                }
+
+                // DarkerVision support
+                try {
+                    DarkerVisionFor5e.betterDimVision(this.sources);
+                } catch (e) {}
+            }
+        }(baseSightUpdate);
+
+
+        // ? -> 0.6.2 -> 0.6.5
+        /*
+         update(alpha=null) {
+             const d = canvas.dimensions;
+             const c = this.lighting;
+
+             // Draw darkness layer
+             this._darkness = alpha !== null ? alpha : canvas.scene.data.darkness;
+             c.darkness.clear();
+             const darknessPenalty = 0.8;
+             let darknessColor = canvas.scene.getFlag("core", "darknessColor") || CONFIG.Canvas.darknessColor;
+             if ( typeof darknessColor === "string" ) darknessColor = colorStringToHex(darknessColor);
+             c.darkness.beginFill(darknessColor, this._darkness * darknessPenalty)
+               .drawRect(0, 0, d.width, d.height)
+               .endFill();
+
+             // Draw lighting atop the darkness
+             c.lights.clear();
+             for ( let s of canvas.sight.sources.lights.values() ) {
+               if ( s.darknessThreshold <= this._darkness ) {
+                 c.lights.beginFill(s.color, s.alpha).drawPolygon(s.fov).endFill();
+               }
+             }
+           }
+        */
+        let baseLightingUpdate = LightingLayer.prototype.update;
+        LightingLayer.prototype.update = function (base) {
+            return function (alpha = null) {
+                const d = canvas.dimensions;
+                const c = this.lighting;
+
+                // Draw darkness layer
+                this._darkness = alpha !== null ? alpha : canvas.scene.data.darkness;
+                c.darkness.clear();
+                const darknessPenalty = 0.8;
+                let darknessColor = canvas.scene.getFlag("core", "darknessColor") || CONFIG.Canvas.darknessColor;
+                if (typeof darknessColor === "string") darknessColor = colorStringToHex(darknessColor);
+                c.darkness.beginFill(darknessColor, this._darkness * darknessPenalty)
+                    .drawRect(0, 0, d.width, d.height)
+                    .endFill();
+
+                // Draw lighting atop the darkness
+                c.lights.clear();
+
+                /* Patch start */
+                DancingLights.drawLighting(false);
                 /* Patch end */
             }
-        }
+        }(baseLightingUpdate);
 
-        // Draw fog exploration every 10 positions
-        if (this._fogUpdates >= 10) this._commitFogUpdate();
-
-        // Restrict visibility of objects
-        this.restrictVisibility();
-
-        // Log debug status
-        if (CONFIG.debug.sight) {
-            let ns = performance.now() - pNow;
-            console.log(`Rendered Sight Layer update in ${ns}ms`);
-        }
-
-        // DarkerVision support
-        try {
-            DarkerVisionFor5e.betterDimVision(this.sources);
-        } catch (e) {}
+        // Force refreshed players with token vision to apply blur
+        DancingLights.forceLayersUpdate();
     }
-
-
-    // ? -> 0.6.2 -> 0.6.5
-    /*
-     update(alpha=null) {
-         const d = canvas.dimensions;
-         const c = this.lighting;
-
-         // Draw darkness layer
-         this._darkness = alpha !== null ? alpha : canvas.scene.data.darkness;
-         c.darkness.clear();
-         const darknessPenalty = 0.8;
-         let darknessColor = canvas.scene.getFlag("core", "darknessColor") || CONFIG.Canvas.darknessColor;
-         if ( typeof darknessColor === "string" ) darknessColor = colorStringToHex(darknessColor);
-         c.darkness.beginFill(darknessColor, this._darkness * darknessPenalty)
-           .drawRect(0, 0, d.width, d.height)
-           .endFill();
-
-         // Draw lighting atop the darkness
-         c.lights.clear();
-         for ( let s of canvas.sight.sources.lights.values() ) {
-           if ( s.darknessThreshold <= this._darkness ) {
-             c.lights.beginFill(s.color, s.alpha).drawPolygon(s.fov).endFill();
-           }
-         }
-       }
-    */
-
-    canvas.lighting.update = function (alpha = null) {
-        const d = canvas.dimensions;
-        const c = this.lighting;
-
-        // Draw darkness layer
-        this._darkness = alpha !== null ? alpha : canvas.scene.data.darkness;
-        c.darkness.clear();
-        const darknessPenalty = 0.8;
-        let darknessColor = canvas.scene.getFlag("core", "darknessColor") || CONFIG.Canvas.darknessColor;
-        if (typeof darknessColor === "string") darknessColor = colorStringToHex(darknessColor);
-        c.darkness.beginFill(darknessColor, this._darkness * darknessPenalty)
-            .drawRect(0, 0, d.width, d.height)
-            .endFill();
-
-        // Draw lighting atop the darkness
-        c.lights.clear();
-
-        /* Patch start */
-        DancingLights.drawLighting(false);
-        /* Patch end */
-    }
-
-    // Force refreshed players with token vision to apply blur
-    DancingLights.forceLayersUpdate();
-
 }
-}
+
 
 Hooks.on("init", DancingLights.onInit);
