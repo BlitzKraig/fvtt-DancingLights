@@ -732,6 +732,8 @@ static onPreUpdateToken(scene, token, changes, diff, sceneID) {
 }
 /* beautify ignore:end */
 
+
+/* beautify ignore:start */
 static onUpdateToken(scene, token, changes, diff, sceneID) {
     if (!changes?.flags?.world?.dancingLights) {
         // return if flag data was not changed in token. Prevents refreshing on token move for example.
@@ -740,6 +742,8 @@ static onUpdateToken(scene, token, changes, diff, sceneID) {
     DancingLights.forceReinit();
     DancingLights.forceLayersUpdate();
 }
+/* beautify ignore:end */
+
 /* Token Config End */
 
 /* Multiselect Start */
@@ -944,7 +948,11 @@ static drawLighting(advanceFrame) {
                     }
                 }
             } else if (childLight && childLight.data.flags.world.dancingLights.hidden) {
-                let hiddenFov = {"points":[0,0],"type":0,"closeStroke":true}
+                let hiddenFov = {
+                    "points": [0, 0],
+                    "type": 0,
+                    "closeStroke": true
+                }
                 canvas.lighting.lighting.lights.beginFill(s.color, 0).drawPolygon(hiddenFov).endFill();
             } else {
                 canvas.lighting.lighting.lights.beginFill(s.color, s.alpha).drawPolygon(s.fov).endFill();
@@ -961,6 +969,26 @@ static drawLighting(advanceFrame) {
 }
 
 static onInit() {
+    let baseDrawControlIcon = AmbientLight.prototype._drawControlIcon;
+    AmbientLight.prototype._drawControlIcon = function (base) {
+        return function () {
+            /* beautify ignore:start */
+            if (this?.data?.flags?.world?.dancingLights?.hidden) {
+                const size = Math.max(Math.round((canvas.dimensions.size * 0.5) / 20) * 20, 40);
+                let icon = new ControlIcon({
+                    texture: "modules/DancingLights/icons/fire-off.svg",
+                    size: size
+                });
+                icon.x -= (size * 0.5);
+                icon.y -= (size * 0.5);
+                return icon;
+            } else {
+                return base();
+            }  
+            /* beautify ignore:end */
+        };
+    }(baseDrawControlIcon);
+    
     game.settings.register("DancingLights", "enabledForClient", {
         name: "Enable Dancing Lights (Per client)",
         hint: "My PC can handle it! If a player is having trouble with dancing lights, but you don't want everyone else to miss out, ask them to disable this checkbox",
@@ -1136,31 +1164,32 @@ static patchLighting() {
             }
             /* beautify ignore:start */
             if (dancingLightOptions?.hidden) {
-                /* beautify ignore:end */
                 radius = 0;
+                fov = {
+                    "points": [0, 0],
+                    "type": 0,
+                    "closeStroke": true
+                };
             }
+            /* beautify ignore:end */
         }
         /* Monkeypatch block end */
 
         let source = new PIXI.Container();
         source.light = source.addChild(new PIXI.Graphics());
-        // TODO: Remove source.children[0] and redraw to scale
-        // $pixi.children[0] = $pixi.addChild(new PIXI.Graphics());
-        // $pixi.children[0].beginFill(0xFF0000, 1.0).drawCircle(1450, 1350, 100).endFill();
         source.light.beginFill(hex, 1.0).drawCircle(x, y, radius).endFill();
         source.fov = source.addChild(new PIXI.Graphics());
         source.fov.beginFill(0xFFFFFF, 1.0).drawPolygon(fov).endFill();
         source.light.mask = source.fov;
 
         /* Monkeypatch block */
-        
+
         if (layer === 'vision' && game.settings.get("DancingLights", "dimBrightVision")) {
             source.alpha = game.settings.get("DancingLights", "dimBrightVisionAmount") || 0.5;
         }
-        
+
         /* beautify ignore:start */
         if (layer != 'vision' && !dancingLightOptions?.hidden) {
-            /* beautify ignore:end */
             if (channel === 'bright') {
                 source.name = `${type}.${id}`;
                 if (dancingLightOptions && dancingLightOptions.enabled) {
@@ -1205,7 +1234,8 @@ static patchLighting() {
                 }
             }
         }
-        if(game.settings.get("DancingLights", "updateMask") === true) {
+    /* beautify ignore:end */
+        if (game.settings.get("DancingLights", "updateMask") === true) {
             source.mask = source.fov;
         }
         /* Monkeypatch block end */
@@ -1298,14 +1328,37 @@ update() {
 
         // Iterate over all sources and render them
 
+        /* Patch start */
         let tempIndex = 0;
         for (let sources of Object.values(this.sources)) {
             let layerKey = Object.keys(this.sources)[tempIndex++];
             // for ( let s of sources.values() ) {
             // for (let sourceKey of Object.keys(this.sources)) {
             //     let sources = this.sources[sourceKey];
+            // TODO for 0.7.1+, set the fov outside the update method and try to use the default version
             for (let k of sources.keys()) {
+                let isHidden;
+                if (layerKey === "lights") {
+                    let [type, id] = k.split('.');
+                    /* beautify ignore:start */
+                if (type === "Light") {
+                    isHidden = canvas.lighting.get(id)?.data?.flags?.world?.dancingLights?.hidden;
+                } else if (type === "Token") {
+                    isHidden = canvas.tokens.get(id)?.data?.flags?.world?.dancingLights?.hidden;
+                }
+                /* beautify ignore:end */
+                }
                 let s = sources.get(k);
+                if (isHidden) {
+                    s.fov = {
+                        "points": [0, 0],
+                        "type": 0,
+                        "closeStroke": true
+                    };
+                }
+
+                /* Patch end */
+
                 // Draw line of sight polygons
                 if (s.los) {
                     light.los.beginFill(0xFFFFFF, 1.0).drawPolygon(s.los).endFill();
@@ -1318,6 +1371,7 @@ update() {
                 }
 
                 // Draw the source for each vision channel
+                /* Patch start */
                 for (let [c, r] of Object.entries(s.channels)) {
                     if ((r !== 0) && s.darknessThreshold <= canvas.lighting._darkness) {
                         let channel = light[c];
@@ -1333,6 +1387,7 @@ update() {
                         }));
                     }
                 }
+                /* Patch end */
             }
         }
 
