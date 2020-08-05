@@ -335,7 +335,7 @@ class DancingLights {
         });
         /* beautify ignore:end */
         let danceType = DancingLights.getFormElement("Dancing Lights Type", "Select 'none' to disable the animations (if you just want the blur for example)", "select", "type", objectConfig.object.data.flags.world.dancingLights.type || "none", "String", {
-            values: ["fire", "legacyfire", "blink", "fade", "electricfault", "none"],
+            values: ["fire", "legacyfire", "blink", "fade", "electricfault", "lightning", "none"],
             onChange: `DancingLights.displayExtendedOptions(this.value !== "none", "typeOptions"); DancingLights.displayExtendedOptions(this.value == "fire" || this.value == "legacyfire", "fireOptions"); DancingLights.displayExtendedOptions(this.value == "blink" || this.value == "fade", "blinkFadeOptions"); DancingLights.displayExtendedOptions(this.value == "blink", "blinkOptions");`
         });
         let minFade = DancingLights.getFormElement("Minimum Fade", "The minimum opacity of the light. This should be lower than Maximum Fade, or will be reverted to 0.4. The default value is set to work well with Fire.", "range", "minFade", typeof objectConfig.object.data.flags.world.dancingLights.minFade !== 'undefined' ? objectConfig.object.data.flags.world.dancingLights.minFade : 0.4, "Number", {
@@ -370,7 +370,7 @@ class DancingLights {
             step: 1
         });
         let dimMovement = DancingLights.getFormElement("Enable Dim Radius Movement", "The dim light radius will also move around based on 'Fire Movement Amount'", "checkbox", "dimMovement", objectConfig.object.data.flags.world.dancingLights.dimMovement || false, "Boolean");
-        let speed = DancingLights.getFormElement("Speed", "The speed of the 'animations'. Lower is faster. Note that the movement of the 'fire' is not affected by this, only the alpha changes. The 'electricfault' type triggers more often with higher numbers here.", "range", "speed", typeof objectConfig.object.data.flags.world.dancingLights.speed !== 'undefined' ? objectConfig.object.data.flags.world.dancingLights.speed : 1, "Number", {
+        let speed = DancingLights.getFormElement("Speed", "The speed of the 'animations'. Lower is faster. Note that the movement of the 'fire' is not affected by this, only the alpha changes. The 'electricfault' and 'lightning' types trigger more often with higher numbers here.", "range", "speed", typeof objectConfig.object.data.flags.world.dancingLights.speed !== 'undefined' ? objectConfig.object.data.flags.world.dancingLights.speed : 1, "Number", {
             min: 1,
             max: 10,
             step: 1
@@ -541,9 +541,14 @@ class DancingLights {
 
                 return DancingLights.Utilities.scale(alpha, 0, 1, minFade, maxFade);
                 // return alpha;
-            case 'electricfault':
+            case 'electricfault': {
                 let midFade = (maxFade + minFade) / 2
                 return Math.random() < (.05 * speed) ? Math.random() < .5 ? minFade : midFade : maxFade;
+            }
+            case 'lightning': {
+                let midFade = (maxFade + minFade) / 2
+                return Math.random() < (.05 * speed) ? Math.random() < .5 ? maxFade : midFade : minFade;
+            }
             case 'none':
                 return 1;
 
