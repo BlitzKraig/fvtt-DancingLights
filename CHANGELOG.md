@@ -1,3 +1,11 @@
+# 2.1.4 - 2020/08/06
+
+* Added more macros to turn Dancing Light effects on or off
+
+# 2.1.3 - 2020/08/05
+
+* Added Lightning type light
+
 # 2.1.2 - 2020/08/02
 
 * Fixed Fog of War and token hiding properly on switched-off lights

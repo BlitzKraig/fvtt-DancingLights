@@ -156,6 +156,83 @@ class DancingLights {
             } else {
                 ui.notifications.warn("No lights or tokens selected");
             }
+        },
+        danceOn: ()=>{
+            let lightsArray = []
+            let tokensArray = []
+            for (let light of canvas.lighting.controlled) {
+                light.data.flags.world.dancingLights.enabled = true;
+                lightsArray.push(light.data);
+            }
+            
+            for (let token of canvas.tokens.controlled) {
+                token.data.flags.world.dancingLights.enabled = true;
+                tokensArray.push(token.data);
+            }
+            
+            if(lightsArray.length > 0){
+                canvas.lighting.updateMany(lightsArray, {
+                    diff: false
+                });
+            } else if (tokensArray.length > 0){
+                canvas.tokens.updateMany(tokensArray, {
+                    diff: false
+                });
+            } else {
+                ui.notifications.warn("No lights or tokens selected");
+            }
+        },
+        danceOff: ()=>{
+            let lightsArray = []
+            let tokensArray = []
+            for (let light of canvas.lighting.controlled) {
+                light.data.flags.world.dancingLights.enabled = false;
+                lightsArray.push(light.data);
+            }
+            
+            for (let token of canvas.tokens.controlled) {
+                token.data.flags.world.dancingLights.enabled = false;
+                tokensArray.push(token.data);
+            }
+            
+            if(lightsArray.length > 0){
+                canvas.lighting.updateMany(lightsArray, {
+                    diff: false
+                });
+            } else if (tokensArray.length > 0){
+                canvas.tokens.updateMany(tokensArray, {
+                    diff: false
+                });
+            } else {
+                ui.notifications.warn("No lights or tokens selected");
+            }
+        },
+        danceToggle: ()=>{
+            let lightsArray = [];
+            let tokensArray = [];
+            for (let light of canvas.lighting.controlled) {
+                let enabled = light.data.flags.world.dancingLights.enabled ?? false;
+                light.data.flags.world.dancingLights.enabled = !enabled;
+                lightsArray.push(light.data);
+            }
+
+            for (let token of canvas.tokens.controlled) {
+                let enabled = token?.data?.flags?.world?.dancingLights?.enabled ?? false;
+                token.data.flags.world.dancingLights.enabled = !enabled;
+                tokensArray.push(token.data);
+            }
+
+            if(lightsArray.length > 0){
+                canvas.lighting.updateMany(lightsArray, {
+                    diff: false
+                });
+            } else if (tokensArray.length > 0){
+                canvas.tokens.updateMany(tokensArray, {
+                    diff: false
+                });
+            } else {
+                ui.notifications.warn("No lights or tokens selected");
+            }
         }
         /* beautify ignore:end */
     }
