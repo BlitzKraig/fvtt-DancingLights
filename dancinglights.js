@@ -26,7 +26,24 @@ class DancingLights {
                 arr[length] = fillValue;
             }
             return arr;
+        },
+        /* beautify ignore:start */
+        safeStringify: (obj, indent = 2) => {
+            let cache = [];
+            const retVal = JSON.stringify(
+              obj,
+              (key, value) =>
+                typeof value === "object" && value !== null
+                  ? cache.includes(value)
+                    ? undefined // Duplicate reference found, discard key
+                    : cache.push(value) && value // Store value in our collection
+                  : value,
+              indent
+            );
+            cache = null;
+            return retVal;  
         }
+        /* beautify ignore:end */
     }
 
     static Macros = {
@@ -233,8 +250,173 @@ class DancingLights {
             } else {
                 ui.notifications.warn("No lights or tokens selected");
             }
+        },
+        debugInfo: (json)=>{
+            
+            if(navigator.userAgent.includes('FoundryVirtualTabletop')){
+                ui.notifications.notify(`Cannot generate debug page in the Foundry app. Press F12 or fn+F12 to view the debug info in the console.`);
+                console.log("Cannot create tab for debug info, pasting to console");
+                console.log(json || JSON.stringify(canvas.scene.data, undefined, 2));
+               
+            } else {
+                if(json){
+                    DancingLights.generateDebugPage(JSON.parse(json));
+                } else {
+                    DancingLights.generateDebugPage(canvas.scene.data);
+                        // TODO Add references for: Object.keys(canvas.tokens._controlled), Object.keys(canvas.lighting._controlled));
+                }
+            }
         }
         /* beautify ignore:end */
+    }
+
+    static _HTMLTagHelpers = {
+        addClass: (cssClass) => {
+            if (cssClass) {
+                return ` class=${cssClass}`;
+            }
+            return '';
+        },
+        colorBoolCheck: (content, desiredResult) => {
+            if (content.split(': ')[1] == desiredResult) {
+                return ` style="color:green;"`;
+            } else {
+                return ` style="color:red;"`;
+            }
+        }
+    }
+    static HTMLTag = {
+        h1: (content, cssClass) => {
+            return `<h1${this._HTMLTagHelpers.addClass(cssClass)}>${content}</h1>`;
+        },
+        h2: (content, cssClass) => {
+            return `<h2${this._HTMLTagHelpers.addClass(cssClass)}>${content}</h2>`;
+        },
+        h3: (content, cssClass) => {
+            return `<h3${this._HTMLTagHelpers.addClass(cssClass)}>${content}</h3>`;
+        },
+        p: (content, cssClass) => {
+            return `<p${this._HTMLTagHelpers.addClass(cssClass)}>${content}</p>`;
+        },
+        div: (content, cssClass) => {
+            return `<div${this._HTMLTagHelpers.addClass(cssClass)}>${content}</div>`;
+        },
+        boolCheckDiv: (content, cssClass, desiredResult) => {
+            return `<div${this._HTMLTagHelpers.addClass(cssClass)}${this._HTMLTagHelpers.colorBoolCheck(content, desiredResult)}>${content}</div>`;
+        },
+        openRow: () => {
+            return `<div class="row">`;
+        },
+        closeRow: () => {
+            return `</div>`;
+        },
+        openHeading: (content) => {
+            let html = this.HTMLTag.openRow();
+            html += `<div class="col-12"> <h2>${content}</h2>`;
+            html += this.HTMLTag.openRow();
+            return html;
+        },
+        closeHeading: () => {
+            let html = this.HTMLTag.closeRow();
+            html += `</div>`;
+            html += this.HTMLTag.closeRow();
+            return html;
+        }
+    }
+
+    static generateDebugPage = (sceneData) => {
+        let tag = DancingLights.HTMLTag;
+        let data = `<!DOCTYPE html>
+        <html>
+        <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <link rel="stylesheet" type="text/css" href="modules/DancingLights/css/bootstrap.min.css">
+        <link rel="stylesheet" type="text/css" href="modules/DancingLights/css/dancinglights.css">
+        <script>
+            function copyDLJson(){
+                var copyText = document.getElementById("DLJsonContent");
+                copyText.select();
+                document.execCommand("copy");
+                alert("Dancing Lights JSON Copied to Clipboard. Please paste this to Blitz#6797 with details about your issue.");
+            }
+        </script>
+        </head>
+        <body>
+        <div class="container" id="content">`;
+        data += `<textarea name="DLJsonContent" id="DLJsonContent">${JSON.stringify(sceneData, undefined, 2)}</textarea>`;
+        data += tag.h1("Dancing Lights Debug");
+        data += tag.p("Scene debug information", "lead");
+        data += `<button onClick="copyDLJson()">Copy JSON</button>`
+
+        // ENTITIES OVERVIEW
+        data += tag.openHeading("Entities Overview");
+        data += tag.div(`Number of lights: ${sceneData.lights.length}`, "col-4");
+        data += tag.div(`Number of tokens: ${sceneData.tokens.length}`, "col-4");
+        data += tag.div(`Number of walls: ${sceneData.walls.length}`, "col-4");
+        data += tag.closeHeading();
+
+        // SCENE SETTINGS
+        data += tag.openHeading("Scene Settings");
+
+        let sceneSettings = ['name', 'active', 'darkness', 'fogExploration', 'globalLight', 'tokenVision'];
+
+        sceneSettings.forEach(setting => {
+            let content = `${setting}: ${sceneData[setting]}`;
+            if (['active', 'fogExploration', 'tokenVision'].includes(setting)) {
+                data += tag.boolCheckDiv(content, "col-4", 'true');
+            } else if (setting == "globalLight") {
+                data += tag.boolCheckDiv(content, "col-4", 'false');
+            } else {
+                data += tag.div(content, "col-4");
+            }
+        });
+
+        data += tag.closeHeading();
+
+        // LIGHT SETTINGS
+        data += tag.openHeading("Light Settings");
+        sceneData.lights.forEach((light, index) => {
+            let flatLightObj = flattenObject(light);
+            data += tag.div(`<b>Light ${index+1}</b>`, "col-12");
+            var lightingMap = Object.entries(flatLightObj);
+            lightingMap.forEach((lightProperty) => {
+                data += tag.div(`${lightProperty[0].replace('flags.world.dancingLights', 'DL')}: ${lightProperty[1]}`, "col-4");
+            });
+
+            data += tag.closeRow();
+            data += tag.openRow();
+
+        });
+        data += tag.closeHeading();
+
+        // TOKEN SETTINGS
+        data += tag.openHeading("Token Settings");
+        sceneData.tokens.forEach((token, index) => {
+            let flatTokenObj = flattenObject(token);
+            data += tag.div(`<b>Token ${index+1}</b>`, "col-12");
+            var tokenMap = Object.entries(flatTokenObj);
+            tokenMap.forEach((tokenProperty) => {
+                data += tag.div(`${tokenProperty[0].replace('flags.world.dancingLights', 'DL')}: ${tokenProperty[1]}`, "col-4");
+            });
+
+            data += tag.closeRow();
+            data += tag.openRow();
+
+        });
+        data += tag.closeHeading();
+
+        // Dancing lights settings
+
+        // sceneData.lights.forEach(light => {
+        //     data += `<p>${JSON.stringify(light)}</p>`;
+        // });
+
+        data += `</div></body></html>`;
+        let tab = window.open('about:blank', '_blank');
+        tab.document.write(data);
+        tab.document.close();
+        console.log(JSON.stringify(sceneData.lights, undefined, 2));
     }
 
     static danceTimerTick = 80;
@@ -1182,7 +1364,15 @@ class DancingLights {
             default: {}
         })
 
-        if (game.settings.get("DancingLights", "enabledForClient")) {
+        if (parseFloat(game.data.version.split(/\.(.+)/)[1]) >= 7.1) {
+            console.log("Dancing Lights does not work on FVTT 0.7.1+. A new version is being developed to support the new lighting system. Please disable Dancing Lights or downgrade FVTT.");
+            // ui.notifications may not be ready. We should really wait for the hook, but this is a temp message anyway.
+            setTimeout(() => {
+                ui.notifications.error("Dancing Lights does not work on FVTT 0.7.1+. A new version is being developed to support the new lighting system. Please disable Dancing Lights or downgrade FVTT.", {
+                    permanent: true
+                });
+            }, 1000);
+        } else if (game.settings.get("DancingLights", "enabledForClient")) {
             Hooks.on("renderLightConfig", DancingLights.onRenderLightConfig);
             Hooks.on("renderTokenConfig", DancingLights.onRenderTokenConfig);
             Hooks.on("preUpdateAmbientLight", DancingLights.onPreUpdateAmbientLight);

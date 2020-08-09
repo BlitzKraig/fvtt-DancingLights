@@ -1,3 +1,9 @@
+# 2.1.5 - 2020/08/09
+
+* Probable final version before the rewrite for 0.7.1
+* Added debug helper macros & debug page generation
+* Added 0.7.1+ message
+
 # 2.1.4 - 2020/08/06
 
 * Added more macros to turn Dancing Light effects on or off
